@@ -1,5 +1,12 @@
+\definecolor{headergreen}{RGB}{90, 164, 90}
+\definecolor{tablerowgreen}{RGB}{235, 247, 238}
+
 % \omiss produces '[...]'
 \newcommand{\omissis}{[\dots\negthinspace]}
+
+% rimuove la scritta capitolo X
+\titleformat{\chapter}[display]{\normalfont\huge\bfseries}{}{0pt}{\huge}
+\titlespacing*{\chapter}{0pt}{-20pt}{20pt}
 
 % Itemize symbols
 % see: https://tex.stackexchange.com/a/62497
@@ -18,9 +25,14 @@
 \makeatother
 
 % Uncomment the following line for a different header/footer style
-% \pagestyle{fancy} \setlength{\headheight}{14.5pt}
+\pagestyle{fancy} \setlength{\headheight}{14.5pt}
 \fancyhead[L]{\fontsize{12}{14.5} \selectfont \thechapter. \Chaptername}
 \fancyhead[R]{\fontsize{12}{14.5} \selectfont \currentname}
+
+\renewcommand{\arraystretch}{1.6}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcommand{\thead}[1]{\textcolor{white}{\textbf{#1}}}
+
 % Page number always in footer
 \cfoot{\thepage}
 
@@ -98,8 +110,8 @@
     %nesting=true,
     %frenchlinks,
     urlcolor=webbrown,
-    linkcolor=RoyalBlue,
-    citecolor=webgreen
+    linkcolor=OliveGreen,
+    citecolor=OliveGreen  
     %pagecolor=RoyalBlue,
 }
 

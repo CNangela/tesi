@@ -1,44 +1,68 @@
 \chapter{Introduzione}
 \label{cap:introduzione}
 
-Introduzione al contesto applicativo.\\
+% Introduzione al contesto applicativo.\\
 
-\noindent Esempio di utilizzo di un termine nel glossario \\
-\gls{api}. \\
+% \noindent Esempio di utilizzo di un termine nel glossario \\
+% \gls{api}. \\
 
-\noindent Esempio di citazione in linea \\
-\cite{site:agile-manifesto}. \\
+% \noindent Esempio di citazione in linea \\
+% \cite{site:agile-manifesto}. \\
 
-\noindent Esempio di citazione nel pie' di pagina \\
-citazione\footcite{womak:lean-thinking} \\
+% \noindent Esempio di citazione nel pie' di pagina \\
+% citazione\footcite{womak:lean-thinking} \\
 
-\section{L'azienda}
+\section{Presentazione dell'azienda}
+ 
+\subsection{VarGroup S.p.A.}
+ 
+VarGroup S.p.A. è una società italiana attiva nel settore dei servizi e delle soluzioni digitali, fondata nel 2008 con sede legale a Empoli (FI).\\
+ 
+\noindent Al 30 aprile 2025, VarGroup conta oltre 4.200 dipendenti, con una presenza in 16 paesi nel mondo \cite{site:vargroup_info}. In Italia la società opera attraverso una rete di sedi distribuite sul territorio nazionale; tra queste rientra la sede di Padova, operante sotto la ragione sociale UAN COMPANY S.r.l, presso la quale si è svolto lo stage. \\
 
-Descrizione dell'azienda.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.5\textwidth]{vargroup_logo}
+    \caption{Logo dell'azienda VarGroup}
+\end{figure}
 
-\section{L'idea}
+\subsection{Valori aziendali}
 
-Introduzione all'idea dello stage.
+VarGroup ha definito la propria identità attraverso una \emph{Carta dei Valori} e un \emph{Manifesto}, costruiti con il contributo diretto delle persone che lavorano in azienda, attraverso sondaggi, tavoli di lavoro e \emph{workshop}. I valori non sono stati definiti dalla direzione, ma sono il risultato del contributo delle persone che vivono l'azienda ogni giorno.
+L'identità dell'azienda è organizzata attorno a quattro polarità che orientano 
+i comportamenti e le scelte quotidiane \cite{site:vargroup_manifesto}:
 
-\section{Organizzazione del testo}
-
-\begin{description}
-    \item[{\hyperref[cap:processi-metodologie]{Il secondo capitolo}}] descrive ...
-    
-    \item[{\hyperref[cap:descrizione-stage]{Il terzo capitolo}}] approfondisce ...
-    
-    \item[{\hyperref[cap:analisi-requisiti]{Il quarto capitolo}}] approfondisce ...
-    
-    \item[{\hyperref[cap:progettazione-codifica]{Il quinto capitolo}}] approfondisce ...
-    
-    \item[{\hyperref[cap:verifica-validazione]{Il sesto capitolo}}] approfondisce ...
-    
-    \item[{\hyperref[cap:conclusioni]{Nel settimo capitolo}}] descrive ...
-\end{description}
-
-Riguardo la stesura del testo, relativamente al documento sono state adottate le seguenti convenzioni tipografiche:
 \begin{itemize}
-	\item gli acronimi, le abbreviazioni e i termini ambigui o di uso non comune menzionati vengono definiti nel glossario, situato alla fine del presente documento;
-	\item per la prima occorrenza dei termini riportati nel glossario viene utilizzata la seguente nomenclatura: \emph{parola}\glsfirstoccur;
-	\item i termini in lingua straniera o facenti parti del gergo tecnico sono evidenziati con il carattere \emph{corsivo}.
+    \item Responsabile \& Autonoma;
+    \item Visionaria \& Concreta;
+    \item Unica \& Diversificata;
+    \item Disciplinata \& Audace.
 \end{itemize}
+
+\subsection{Prodotti e servizi}
+ 
+L'offerta di VarGroup copre diversi ambiti dell'informatica aziendale \cite{site:vargroup_services}. I principali servizi erogati sono:
+ 
+\begin{itemize}
+    \item \textbf{Multimedia \& Workspaces}: gestione di ambienti di lavoro digitali e interconnessi;
+    \item \textbf{Business Applications}: sviluppo e integrazione di \emph{ERP}, soluzioni e piattaforme gestionali;
+    \item \textbf{Digital Experience}: comunicazione, \emph{marketing} e \emph{analytics};
+    \item \textbf{Industry Solutions}: soluzioni applicative per ogni settore industriale;
+    \item \textbf{Cybersecurity}: soluzioni di sicurezza informatica globale a protezione del \emph{business};
+    \item \textbf{Data Science}: analisi dei dati al centro dell'evoluzione digitale;
+    \item \textbf{Digital as a Service}: punto di contatto unico per l'innovazione;
+    \item \textbf{Digital Evolution}: servizi integrati per affrontare nuove sfide;
+    \item \textbf{Industrial Digital Twin}: soluzioni integrate per le aziende manifatturiere;
+    \item \textbf{Sustainability Solutions}: tecnologie e servizi per la sostenibilità;
+    \item \textbf{iSquared}: allineamento di processi, persone e adozione dell'intelligenza artificiale.
+\end{itemize}
+ 
+\noindent La sede padovana che ha ospitato lo stage è orientata principalmente allo sviluppo di applicativi \emph{web}, con un interesse crescente verso l'integrazione di \gls{llm} nei prodotti sviluppati internamente.
+
+\section{Motivazione della scelta}
+
+La scelta di questo stage nasce da un'esperienza precedente: il progetto di Ingegneria del Software si è svolto presso la stessa azienda, dove ho avuto modo di conoscere parte del team e di apprezzarne la disponibilità. Questa esperienza pregressa ha influito positivamente sulla scelta di svolgere il tirocinio nella stessa realtà.\\
+
+\noindent Dal punto di vista tecnico, il progetto tocca tre ambiti: sviluppo \emph{frontend}, \emph{backend} e integrazione con servizi di intelligenza artificiale. Avendo interesse sia per il \emph{frontend} che per il \emph{backend}, scegliere una proposta che affrontava solo uno solo dei due ambiti sarebbe stato limitante. Questo progetto ha offerto la possibilità di lavorare su entrambi, con tecnologie attuali e richieste nel settore come \emph{NestJS}, all'interno di un unico contesto applicativo.\\
+
+\noindent Un elemento di particolare interesse riguarda l'integrazione con le \gls{api} di Anthropic Enterprise per il modulo di analisi documentale. Il piano di lavoro non prevede l'implementazione diretta di agenti, ma lo sviluppo del modulo \gls{ai} mi permette di capire concretamente come questi sistemi funzionino, ad oggi una competenza molto richiesta nel settore.

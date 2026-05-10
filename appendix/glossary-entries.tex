@@ -1,21 +1,92 @@
 % Acronyms
-\newacronym[description={\glslink{apig}{Application Program Interface}}]
-    {api}{API}{Application Program Interface}
+\newacronym[description={\glslink{api}{Application Program Interface}}]
+    {apig}{APIg}{Application Programming Interface}
 
-\newacronym[description={\glslink{umlg}{Unified Modeling Language}}]
-    {uml}{UML}{Unified Modeling Language}
+\newacronym[description={\glslink{llm}{Large Language Model}}]
+    {llmg}{LLMg}{Large Language Model}
+
+\newacronym[description={\glslink{ai}{Artificial Intelligence}}]
+    {aig}{AIg}{Artificial Intelligence}
+
+% \newacronym[description={\glslink{umlg}{Unified Modeling Language}}]
+%     {uml}{UML}{Unified Modeling Language}
 
 % Glossary entries
-\newglossaryentry{apig} {
+\newglossaryentry{api} {
     name=\glslink{api}{API},
-    text=Application Program Interface,
+    text=API,
     sort=api,
-    description={in informatica con il termine \emph{Application Programming Interface API} (ing. interfaccia di programmazione di un'applicazione) si indica ogni insieme di procedure disponibili al programmatore, di solito raggruppate a formare un set di strumenti specifici per l'espletamento di un determinato compito all'interno di un certo programma. La finalità è ottenere un'astrazione, di solito tra l'hardware e il programmatore o tra software a basso e quello ad alto livello semplificando così il lavoro di programmazione}
+    description={in informatica con il termine \emph{API} (ing. \emph{Application Programming Interface}, interfaccia di programmazione di un'applicazione) si indica un insieme di definizioni e protocolli che permettono a due applicazioni software di comunicare tra loro. Le \emph{API} definiscono le modalità con cui un componente software può richiedere servizi o dati a un altro, astraendo i dettagli implementativi interni e rendendo possibile l'integrazione tra sistemi eterogenei}
 }
 
-\newglossaryentry{umlg} {
-    name=\glslink{uml}{UML},
-    text=UML,
-    sort=uml,
-    description={in ingegneria del software \emph{UML, Unified Modeling Language} (ing. linguaggio di modellazione unificato) è un linguaggio di modellazione e specifica basato sul paradigma object-oriented. L'\emph{UML} svolge un'importantissima funzione di ``lingua franca'' nella comunità della progettazione e programmazione a oggetti. Gran parte della letteratura di settore usa tale linguaggio per descrivere soluzioni analitiche e progettuali in modo sintetico e comprensibile a un vasto pubblico}
+\newglossaryentry{agile} {
+    name=\glslink{agile}{Agile},
+    text=Agile,
+    sort=agile,
+    description={in ingegneria del software con il termine \emph{Agile} si indica un insieme di metodologie di sviluppo software basate su cicli iterativi e incrementali. L'approccio privilegia la collaborazione continua tra i membri del team, con il cliente e la capacità di adattarsi ai cambiamenti dei requisiti}
 }
+
+\newglossaryentry{git} {
+    name=\glslink{git}{Git},
+    text=Git,
+    sort=git,
+    description={Git è un sistema di controllo di versione distribuito, creato nel 2005. Permette di tracciare le modifiche al codice sorgente nel tempo, gestire branch paralleli di sviluppo e unire le modifiche tramite operazioni di merge. A differenza dei sistemi centralizzati, ogni sviluppatore dispone di una copia completa della storia del repository in locale}
+}
+
+\newglossaryentry{github} {
+    name=\glslink{github}{GitHub},
+    text=GitHub,
+    sort=github,
+    description={GitHub è una piattaforma web per l'hosting e la gestione di repository Git. Permette il versionamento del codice sorgente, la collaborazione tra sviluppatori tramite pull request e la gestione delle modifiche attraverso un sistema di branch. È uno degli strumenti di versionamento più diffusi nel settore dello sviluppo software}
+}
+
+\newglossaryentry{llm} {
+    name=\glslink{llm}{LLM},
+    text=Large Language Model,
+    sort=llm,
+    description={in informatica con il termine \emph{Large Language Model} (LLM, ing. modello linguistico di grandi dimensioni) si indica un tipo avanzato di modello di intelligenza artificiale generativa, addestrato su enormi quantità di testo con lo scopo di comprendere, elaborare e generare linguaggio naturale o codice. Questi modelli sono in grado di svolgere compiti complessi quali sintesi, traduzione, risposta a domande e analisi semantica del testo, senza necessità di essere ri-addestrati per ciascun compito specifico}
+}
+
+\newglossaryentry{jira} {
+    name=\glslink{jira}{Jira},
+    text=Jira,
+    sort=jira,
+    description={Jira è uno strumento software sviluppato da Atlassian per la gestione di progetti e il tracciamento delle attività. Consente di organizzare il lavoro in task, assegnarle ai membri del team, definirne le priorità e monitorarne l'avanzamento. È ampiamente adottato in ambito informatico per supportare metodologie di sviluppo agili, in particolare attraverso la gestione di sprint e backlog}
+}
+
+\newglossaryentry{docker} {
+    name=\glslink{docker}{Docker},
+    text=Docker,
+    sort=docker,
+    description={Docker è una piattaforma \emph{open source} per la creazione, la distribuzione e l'esecuzione di applicazioni all'interno di \emph{container}.
+    Un \emph{container} è un'unità software che racchiude il codice dell'applicazione
+    insieme a tutte le sue dipendenze, garantendo che il programma funzioni in modo uniforme indipendentemente dall'ambiente di esecuzione}
+}
+
+\newglossaryentry{swagger} {
+    name=\glslink{swagger}{Swagger},
+    text=Swagger,
+    sort=swagger,
+    description={Swagger è un insieme di strumenti \emph{open source} basati sulla specifica \emph{OpenAPI}, utilizzati per progettare, documentare e testare \emph{API} REST. Permette di generare automaticamente una interfaccia web interattiva che descrive gli \emph{endpoint} disponibili, i parametri accettati e i formati di risposta, facilitando l'integrazione tra sistemi diversi e la comunicazione tra sviluppatori}
+}
+
+\newglossaryentry{slack} {
+    name=\glslink{slack}{Slack},
+    text=Slack,
+    sort=slack,
+    description={Slack è una piattaforma di comunicazione aziendale che consente di organizzare le conversazioni in canali tematici, inviare messaggi diretti e condividere file tra i membri di un team. È ampiamente adottata in ambito informatico come strumento di comunicazione interna nei progetti di sviluppo software}
+}
+
+\newglossaryentry{ai} {
+    name=\glslink{ai}{AI},
+    text=AI,
+    sort=ai,
+    description={con il termine \emph{AI} (ing. \emph{Artificial Intelligence}, intelligenza artificiale) si indica un ramo dell'informatica che studia e sviluppa sistemi in grado di svolgere compiti che richiederebbero normalmente l'intelligenza umana, quali il riconoscimento del linguaggio naturale, l'apprendimento automatico, il ragionamento e la risoluzione di problemi. Negli ultimi anni il termine è spesso associato in particolare ai modelli di \emph{machine learning} e ai \gls{llm}.}
+}
+
+% \newglossaryentry{umlg} {
+%     name=\glslink{uml}{UML},
+%     text=UML,
+%     sort=uml,
+%     description={in ingegneria del software \emph{UML, Unified Modeling Language} (ing. linguaggio di modellazione unificato) è un linguaggio di modellazione e specifica basato sul paradigma object-oriented. L'\emph{UML} svolge un'importantissima funzione di ``lingua franca'' nella comunità della progettazione e programmazione a oggetti. Gran parte della letteratura di settore usa tale linguaggio per descrivere soluzioni analitiche e progettuali in modo sintetico e comprensibile a un vasto pubblico}
+% }

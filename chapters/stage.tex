@@ -1,0 +1,75 @@
+\chapter{Stage}
+\label{cap:stage}
+
+\section{Presentazione del progetto}
+
+\subsection{Il problema}
+
+La revisione manuale di documenti tecnici o legali è un'attività che richiede tempo e attenzione. Contratti, specifiche tecniche e documenti normativi devono rispettare strutture precise, contenere determinate sezioni e conformarsi a \emph{policy}. Affidarsi esclusivamente alla revisione umana espone il processo a errori di disattenzione e rende difficile garantire una standardizzazione costante, soprattutto quando i volumi di documenti da analizzare sono elevati. 
+
+\subsection{La soluzione}
+
+\noindent Partendo da questa problematica, è stata sviluppata \textit{AI Document Consistency Platform}, una \emph{web application} progettata per automatizzare il controllo di qualità sui documenti testuali. La piattaforma consente di importare documenti in diversi formati (PDF, Word, Markdown) e di sottoporli a un'analisi su diversi aspetti.
+
+\noindent Il sistema adotta un approccio ibrido, composto da due livelli distinti. Il primo livello gestisce i controlli strutturali tramite logiche algoritmiche (\emph{rule-based}): controlla la corretta lunghezza delle sezioni definite nel \emph{ruleset} di configurazione. Il secondo livello delega l'interpretazione semantica del testo ai modelli \gls{llm} Claude di Anthropic, con l'obiettivo di rilevare incoerenze contenutistiche, contraddizioni tra paragrafi, violazioni delle \emph{policy} aziendali e mancanza di sezioni obbligatorie.
+
+\noindent Al termine dell'analisi, la piattaforma restituisce un \emph{report} strutturato
+che evidenzia le criticità riscontrate e propone le relative correzioni, con l'obiettivo di alleggerire i flussi di revisione e garantire un livello elevato di standardizzazione.
+
+\section{Metodologia di lavoro}
+ 
+Il team della sede di Padova adotta un approccio di sviluppo ispirato alla metodologia \emph{\gls{agile}}\glsfirstoccur. Le attività vengono pianificate e monitorate tramite \emph{\gls{jira}}\glsfirstoccur, strumento che consente la gestione delle \emph{task}, il tracciamento dei progressi e l'organizzazione del lavoro per \emph{sprint}.
+ 
+\subsection{Strumenti di supporto}
+ 
+\textbf{Versionamento del codice}: Per il versionamento del codice sorgente viene adottato \emph{\gls{git}}\glsfirstoccur, con \emph{repository} ospitate su \emph{\gls{github}}\glsfirstoccur. L'utilizzo di \emph{branch} differenti per singola funzionalità permette di mantenere ordine sull'organizzazione del progetto e di gestire il processo di integrazione in modo controllato.\\
+ 
+\noindent \textbf{Gestione di progetto}: La gestione delle attività avviene tramite \gls{jira}, attraverso il quale vengono assegnate le \emph{task} ai membri del team, definite le priorità e monitorato l'avanzamento delle funzionalità da implementare. Ogni attività viene tracciata con la relativa: descrizione, importanza e stato di completamento.\\
+
+\noindent \textbf{Comunicazione}: Per la comunicazione interna al team è stato utilizzato \emph{\gls{slack}}\glsfirstoccur. Nel contesto dello stage è stato creato un canale dedicato al progetto, all'interno del quale venivano: condivisi aggiornamenti sullo stato di avanzamento, segnalati eventuali problemi ed effettuate richieste di chiarimenti.
+
+\subsection{Tecnologie di supporto}
+TODO (AWS, React, NestJS, MongoDB, modelli Claude di AntAnthropic)
+
+\section{Rapporto con l'azienda e con il tutor aziendale}
+Lo stage si è svolto interamente in presenza presso la sede di Padova, con orario 
+di lavoro dalle 9:00 alle 18:00 dal lunedì al venerdì. \\
+
+\noindent Il referente formale dello stage è \textbf{Stefano Dindo}, con il ruolo di \emph{Dev Team Lead}. Il supporto operativo quotidiano è stato invece fornito da \textbf{Michele Massaro}, presente in ufficio quasi ogni giorno, con il quale era possibile confrontarsi sia di persona che tramite \gls{slack} in base alla sua disponibilità.\\
+
+\noindent Il rapporto con Michele Massaro è stato continuo: per dubbi o problemi tecnici era possibile ottenere un confronto direttamente durante la giornata, senza dover attendere riunioni formali. Con cadenza settimanale veniva invece fissato un incontro, dedicato a fare il punto sullo stato di avanzamento del progetto, discutere le scelte implementative adottate e definire le priorità per la settimana successiva.
+
+\section{Analisi dei rischi}
+
+Di seguito vengono riportati i principali rischi individuati prima dell'avvio dello sviluppo, con la relativa analisi e le strategie adottate per gestirli.
+
+\rowcolors{2}{tablerowgreen}{white}
+\begin{longtable}{L{2.2cm}|L{1.5cm}|L{1.5cm}|L{2.5cm}|L{2.5cm}|L{2.5cm}}
+\rowcolor{headergreen}
+\thead{Rischio} & 
+\thead{Prob.} & 
+\thead{Impatto} & 
+\thead{Rilevamento} & 
+\thead{Mitigazione} & 
+\thead{Contingenza} \\
+\endfirsthead
+\rowcolor{headergreen}
+\thead{Rischio} & 
+\thead{Prob.} & 
+\thead{Impatto} & 
+\thead{Rilevamento} & 
+\thead{Mitigazione} & 
+\thead{Contingenza} \\
+\endhead
+\endfoot
+
+Tecnologie non conosciute & Alta & Medio & Valutazione delle competenze prima dell'avvio & Studio della documentazione ufficiale & Supporto del tutor aziendale \\
+\hline
+Ritardo nello sviluppo & Media & Alto & Monitoraggio settimanale tramite \gls{jira} & Pianificazione con priorità definite sin dall'inizio & Eliminazione dei requisiti desiderabili e facoltativi \\
+\hline
+Comprensione errata dei requisiti & Media & Alto & Revisione con il responsabile prima dello sviluppo & Analisi con il responsabile durante la raccolta dei requisiti & Correzione dei requisiti con il tutor prima dell'implementazione \\
+\hline
+Risposta errata del \gls{llm} & Media & Medio & Verifica dell'output in fase di test & Riscrittura del \emph{Prompt} per semplificare l'analisi \emph{\gls{ai}}\glsfirstoccur & \emph{Report} in un formato semplificato \\
+\rowcolor{white}\caption{Analisi dei rischi}
+\label{tab:rischi}
+\end{longtable}

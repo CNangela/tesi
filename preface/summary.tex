@@ -8,13 +8,23 @@
 
 \chapter*{Sommario}
 
-Il presente documento descrive il lavoro svolto durante il periodo di stage, della durata di circa trecento ore, dal laureando Pinco Pallino presso l'azienda Azienda S.p.A.
-Gli obbiettivi da raggiungere erano molteplici.\\
-In primo luogo era richiesto lo sviluppo di ...
-In secondo luogo era richiesta l'implementazione di un ...
-Tale framework permette di registrare gli eventi di un controllore programmabile, quali segnali applicati
-Terzo ed ultimo obbiettivo era l'integrazione ...
+Il presente documento descrive il lavoro svolto durante il periodo di stage presso VarGroup di Padova (UAN COMPANY S.r.l), della durata di circa trecento ore nei mesi di maggio e giugno 2026. Gli obiettivi da raggiungere sono riportati di seguito.\\
 
+\noindent L'obiettivo era lo sviluppo di \textit{AI Document Consistency Platform}: una \emph{web application} per l'analisi automatizzata della qualità documentale. La piattaforma consente agli utenti di importare documenti in diversi formati (PDF, Word, Markdown) e di sottoporli a una serie di verifiche, al cui termine viene restituito un \emph{report} dettagliato con le criticità riscontrate e i relativi suggerimenti di correzione. La \emph{web application} prevede inoltre una \emph{dashboard} per la consultazione dello storico dei \emph{report} prodotti.\\
+Il processo di analisi si articola in un sistema ibrido a due livelli:
+\begin{itemize}
+    \item Il primo livello, di natura deterministica, esegue controlli algoritmici sul documento basandosi su un insieme di regole configurabili (\emph{ruleset}). In questo passaggio vengono validati i limiti di lunghezza imposti per le sezioni;
+    \item Il secondo livello utilizza modelli \emph{\gls{llm}}\glsfirstoccur, nello specifico i modelli Claude di Anthropic, con l'obiettivo di individuare incoerenze logiche, contraddizioni tra paragrafi, violazioni delle \emph{policy} aziendali e assenza delle sezioni obbligatorie.
+\end{itemize}
+
+\noindent Infine, è stata richiesta la produzione della documentazione tecnica, composta dalle seguenti parti:
+\begin{itemize}
+    \item \emph{README} per la configurazione e l'avvio del progetto in 
+    ambiente locale e tramite \emph{\gls{docker}}\glsfirstoccur;
+    \item Documentazione delle \emph{\gls{api}}\glsfirstoccur tramite \emph{\gls{swagger}}\glsfirstoccur;
+    \item Guida alla configurazione dei \emph{ruleset}.
+\end{itemize}
+ 
 %\vfill
 
 %\selectlanguage{english}

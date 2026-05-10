@@ -1,6 +1,26 @@
 {
-    "latex-workshop.latex.external.build.command": "latexmk"
+    "latex-workshop.latex.external.build.command": "latexmk",
     "latex-workshop.latex.external.build.args": [
         "thesis.tex"
+    ],
+
+    "cSpell.ignorePaths": [
+        "config/**",
+        "build/**",
+        "appendix/**",
+        "config/**",
+        "preface/**",
+        ".github/**",
+        "settings.json",
+        "readme.md",
+        "structure.tex",
+        "appendix/glossary-entries.tex",
+        "appendix/bibliography.tex",
+        "*.bib"
+    ],
+    "cSpell.words": [
+        "dindo",
+        "Massaro",
+        "versionamento"
     ]
 }
