@@ -9,24 +9,26 @@ La revisione manuale di documenti tecnici o legali è un'attività che richiede 
 
 \subsection{La soluzione}
 
-\noindent Partendo da questa problematica, è stata sviluppata \textit{AI Document Consistency Platform}, una \emph{web application} progettata per automatizzare il controllo di qualità sui documenti testuali. La piattaforma consente di importare documenti in diversi formati (PDF, Word, Markdown) e di sottoporli a un'analisi su diversi aspetti.
+Partendo da questa problematica, è stata sviluppata \textit{AI Document Consistency Platform}: una \emph{web application} progettata per automatizzare il controllo di qualità sui documenti testuali. La piattaforma consente di importare documenti in diversi formati (PDF, Word, Markdown) e di sottoporli a un'analisi su diversi aspetti.
 
-\noindent Il sistema adotta un approccio ibrido, composto da due livelli distinti. Il primo livello gestisce i controlli strutturali tramite logiche algoritmiche (\emph{rule-based}): controlla la corretta lunghezza delle sezioni definite nel \emph{ruleset} di configurazione. Il secondo livello delega l'interpretazione semantica del testo ai modelli \gls{llm} Claude di Anthropic, con l'obiettivo di rilevare incoerenze contenutistiche, contraddizioni tra paragrafi, violazioni delle \emph{policy} aziendali e mancanza di sezioni obbligatorie.
+Il sistema adotta un approccio ibrido, composto da due livelli distinti. Il primo livello gestisce i controlli strutturali tramite logiche algoritmiche (\emph{rule-based}): controlla la corretta lunghezza delle sezioni definite nel \emph{ruleset} di configurazione. Il secondo livello delega l'interpretazione semantica del testo ai modelli \gls{llm} Claude di Anthropic, con l'obiettivo di rilevare incoerenze contenutistiche, contraddizioni tra paragrafi, violazioni delle \emph{policy} aziendali e mancanza di sezioni obbligatorie.
 
-\noindent Al termine dell'analisi, la piattaforma restituisce un \emph{report} strutturato
+Al termine dell'analisi, la piattaforma restituisce un \emph{report} strutturato
 che evidenzia le criticità riscontrate e propone le relative correzioni, con l'obiettivo di alleggerire i flussi di revisione e garantire un livello elevato di standardizzazione.
 
 \section{Metodologia di lavoro}
  
-Il team della sede di Padova adotta un approccio di sviluppo ispirato alla metodologia \emph{\gls{agile}}\glsfirstoccur. Le attività vengono pianificate e monitorate tramite \emph{\gls{jira}}\glsfirstoccur, strumento che consente la gestione delle \emph{task}, il tracciamento dei progressi e l'organizzazione del lavoro per \emph{sprint}.
+Le attività sono state pianificate e monitorate tramite \emph{\gls{jira}}\glsfirstoccur, 
+strumento che consente la gestione delle \emph{task} e il tracciamento dei progressi, 
+visibile a tutti i membri del gruppo e ai responsabili tecnici.
  
 \subsection{Strumenti di supporto}
  
-\textbf{Versionamento del codice}: Per il versionamento del codice sorgente viene adottato \emph{\gls{git}}\glsfirstoccur, con \emph{repository} ospitate su \emph{\gls{github}}\glsfirstoccur. L'utilizzo di \emph{branch} differenti per singola funzionalità permette di mantenere ordine sull'organizzazione del progetto e di gestire il processo di integrazione in modo controllato.\\
+\textbf{Versionamento del codice}: Per il versionamento del codice sorgente è stato adottato \emph{\gls{git}}\glsfirstoccur, con \emph{repository} ospitate su \emph{\gls{github}}\glsfirstoccur. L'utilizzo di \emph{branch} differenti per singola funzionalità ha permesso di mantenere ordine sull'organizzazione del progetto e di gestire il processo di integrazione in modo controllato.\\
  
-\noindent \textbf{Gestione di progetto}: La gestione delle attività avviene tramite \gls{jira}, attraverso il quale vengono assegnate le \emph{task} ai membri del team, definite le priorità e monitorato l'avanzamento delle funzionalità da implementare. Ogni attività viene tracciata con la relativa: descrizione, importanza e stato di completamento.\\
+\textbf{Gestione di progetto}: La gestione delle attività è avvenuta tramite \gls{jira}, attraverso il quale vengono assegnate le \emph{task} ai membri del team, definite le priorità e monitorato l'avanzamento delle funzionalità da implementare. Ogni attività viene stata tracciata con la relativa: descrizione, importanza, stato di completamento e responsabile.\\
 
-\noindent \textbf{Comunicazione}: Per la comunicazione interna al team è stato utilizzato \emph{\gls{slack}}\glsfirstoccur. Nel contesto dello stage è stato creato un canale dedicato al progetto, all'interno del quale venivano: condivisi aggiornamenti sullo stato di avanzamento, segnalati eventuali problemi ed effettuate richieste di chiarimenti.
+\textbf{Comunicazione}: Per la comunicazione interna al team si è utilizzato \emph{\gls{slack}}\glsfirstoccur. Nel contesto dello stage è stato creato un canale dedicato al progetto, all'interno del quale venivano: condivisi aggiornamenti sullo stato di avanzamento, segnalati eventuali problemi ed effettuate richieste di chiarimenti.
 
 \subsection{Tecnologie di supporto}
 TODO (AWS, React, NestJS, MongoDB, modelli Claude di AntAnthropic)
@@ -35,9 +37,9 @@ TODO (AWS, React, NestJS, MongoDB, modelli Claude di AntAnthropic)
 Lo stage si è svolto interamente in presenza presso la sede di Padova, con orario 
 di lavoro dalle 9:00 alle 18:00 dal lunedì al venerdì. \\
 
-\noindent Il referente formale dello stage è \textbf{Stefano Dindo}, con il ruolo di \emph{Dev Team Lead}. Il supporto operativo quotidiano è stato invece fornito da \textbf{Michele Massaro}, presente in ufficio quasi ogni giorno, con il quale era possibile confrontarsi sia di persona che tramite \gls{slack} in base alla sua disponibilità.\\
+Il referente formale dello stage è \textbf{Stefano Dindo}, con il ruolo di \emph{Dev Team Lead}. Il supporto operativo quotidiano è stato invece fornito da \textbf{Michele Massaro}, presente in ufficio quasi ogni giorno, con il quale era possibile confrontarsi sia di persona che tramite \gls{slack} in base alla sua disponibilità.\\
 
-\noindent Il rapporto con Michele Massaro è stato continuo: per dubbi o problemi tecnici era possibile ottenere un confronto direttamente durante la giornata, senza dover attendere riunioni formali. Con cadenza settimanale veniva invece fissato un incontro, dedicato a fare il punto sullo stato di avanzamento del progetto, discutere le scelte implementative adottate e definire le priorità per la settimana successiva.
+Non sono stati programmati incontri fissi settimanali, ma il rapporto con Michele Massaro è stato continuo: per dubbi o problemi tecnici era possibile ottenere un confronto direttamente durante la giornata, senza dover attendere riunioni formali.
 
 \section{Analisi dei rischi}
 
@@ -69,7 +71,9 @@ Ritardo nello sviluppo & Media & Alto & Monitoraggio settimanale tramite \gls{ji
 \hline
 Comprensione errata dei requisiti & Media & Alto & Revisione con il responsabile prima dello sviluppo & Analisi con il responsabile durante la raccolta dei requisiti & Correzione dei requisiti con il tutor prima dell'implementazione \\
 \hline
-Risposta errata del \gls{llm} & Media & Medio & Verifica dell'output in fase di test & Riscrittura del \emph{Prompt} per semplificare l'analisi \emph{\gls{ai}}\glsfirstoccur & \emph{Report} in un formato semplificato \\
+Eterogeneità dei formati documentali & Media & Medio & Verifica durante la fase di sviluppo dei \emph{parser} & Utilizzo di librerie consolidate per ogni formato (PDF, Word, Markdown) & Limitare i formati supportati ai più diffusi \\
+\hline
+Indisponibilità o costo elevato delle \gls{api} Anthropic & Bassa & Alto & Monitoraggio dell'utilizzo durante la fase di test & Limitare le chiamate alle \gls{api} durante lo sviluppo & Utilizzo di un piano di \emph{fallback} con risposte semplificate \\
 \rowcolor{white}\caption{Analisi dei rischi}
 \label{tab:rischi}
 \end{longtable}

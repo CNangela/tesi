@@ -29,9 +29,9 @@
 \fancyhead[L]{\fontsize{12}{14.5} \selectfont \thechapter. \Chaptername}
 \fancyhead[R]{\fontsize{12}{14.5} \selectfont \currentname}
 
-\renewcommand{\arraystretch}{1.6}
+\renewcommand{\arraystretch}{1.8}
 \newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
-\newcommand{\thead}[1]{\textcolor{white}{\textbf{#1}}}
+\newcommand{\thead}[1]{\textcolor{white}{\textls[110]{\textbf{#1}}}}
 
 % Page number always in footer
 \cfoot{\thepage}
@@ -50,7 +50,7 @@
 
 % Page format settings
 % see: http://wwwcdf.pd.infn.it/AppuntiLinux/a2547.htm
-\setlength{\parindent}{14pt}    % first row indentation
+\setlength{\parindent}{0pt}    % first row indentation
 \setlength{\parskip}{0pt}       % paragraphs spacing
 
 
@@ -191,11 +191,11 @@
 
 \newcommand{\usecasename}{UC}
 
-\newcommand{\usecaseactors}[1]{\textbf{\\Attori Principali:} #1. \vspace{4pt}}
-\newcommand{\usecasepre}[1]{\textbf{\\Precondizioni:} #1. \vspace{4pt}}
-\newcommand{\usecasedesc}[1]{\textbf{\\Descrizione:} #1. \vspace{4pt}}
-\newcommand{\usecasepost}[1]{\textbf{\\Postcondizioni:} #1. \vspace{4pt}}
-\newcommand{\usecasealt}[1]{\textbf{\\Scenario Alternativo:} #1. \vspace{4pt}}
+\newcommand{\usecaseactors}[1]{\textbf{\\Attori Principali:} #1 \vspace{4pt}}
+\newcommand{\usecasepre}[1]{\textbf{\\Precondizioni:} #1 \vspace{4pt}}
+\newcommand{\usecasedesc}[1]{\textbf{\\Descrizione:} #1 \vspace{4pt}}
+\newcommand{\usecasepost}[1]{\textbf{\\Postcondizioni:} #1 \vspace{4pt}}
+\newcommand{\usecasealt}[1]{\textbf{\\Scenario Alternativo:} #1 \vspace{4pt}}
 
 % Namespace description environment
 \newenvironment{namespacedesc}{
@@ -208,3 +208,7 @@
 }
 
 \newcommand{\classdesc}[2]{\item[\textbf{#1:}] #2}
+\newcommand{\ucref}[1]{\hyperref[uc:#1]{[UC#1]}}
+\definecolor{tablegray}{RGB}{180, 200, 185}
+\setlength{\arrayrulewidth}{0.2pt}
+\arrayrulecolor{tablegray}
