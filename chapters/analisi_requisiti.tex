@@ -666,6 +666,21 @@ In questa sezione vengono descritti gli attori che interagiscono con il sistema.
 \usecasepost{L'utente ha scaricato il \emph{report} in formato PDF sul proprio dispositivo}
 \end{usecase}
 
+\begin{usecase}{7.10}{Download JSON report}
+\label{uc:7.10}
+\usecaseactors{Utente autenticato}
+\usecasepre{L'utente ha avviato almeno un'analisi su un documento e si trova sulla pagina di visualizzazione del \emph{report}}
+\usecasedesc{L'utente scarica sul proprio dispositivo il \emph{report} in formato PDF}
+\usecasetrig{L'utente clicca sul pulsante per scaricare il PDF del \emph{report}}
+\usecaseprin{
+    \begin{enumerate}
+        \item L'utente visualizza il pulsante per scaricare il JSON del \emph{report};
+        \item L'utente clicca sul pulsante per scaricare il JSON del \emph{report}.
+    \end{enumerate}
+}
+\usecasepost{L'utente ha scaricato il \emph{report} in formato JSON sul proprio dispositivo}
+\end{usecase}
+
 \begin{usecase}{8}{Aggiunta di template personalizzati}
 \label{uc:8}
 \usecaseactors{Utente autenticato}
@@ -965,25 +980,27 @@ R-28-F-D & L'utente deve poter scaricare la versione originale di un documento p
 \hline
 R-29-F-O & L'utente deve poter visualizzare un \emph{report} passato dallo storico & \ucref{7.8} \\
 \hline
-R-30-F-D & L'utente deve poter scaricare il \emph{report} in formato PDF & \ucref{7.9} \\
+R-30-F-O & L'utente deve poter scaricare il \emph{report} in formato PDF & \ucref{7.9} \\
 \hline
-R-31-F-P & L'utente deve poter aggiungere un \emph{template} personalizzato & \ucref{8} \\
+R-31-F-O & L'utente deve poter scaricare il \emph{report} in formato JSON & \ucref{7.10} \\
 \hline
-R-32-F-P & L'utente deve poter visualizzare eventuali errori nella creazione o modifica di un \emph{template} & \ucref{8.1} \\
+R-32-F-P & L'utente deve poter aggiungere un \emph{template} personalizzato & \ucref{8} \\
 \hline
-R-33-F-P & L'utente deve poter annullare la creazione di un nuovo \emph{template} & \ucref{8.2} \\
+R-33-F-P & L'utente deve poter visualizzare eventuali errori nella creazione o modifica di un \emph{template} & \ucref{8.1} \\
 \hline
-R-34-F-P & L'utente deve poter modificare un \emph{template} & \ucref{9} \\
+R-34-F-P & L'utente deve poter annullare la creazione di un nuovo \emph{template} & \ucref{8.2} \\
 \hline
-R-35-F-P & L'utente deve poter annullare le modifiche che sta apportando a un \emph{template} personalizzato & \ucref{9.1} \\
+R-35-F-P & L'utente deve poter modificare un \emph{template} & \ucref{9} \\
 \hline
-R-36-F-P & L'utente deve poter eliminare un \emph{template} personalizzato & \ucref{10} \\
+R-36-F-P & L'utente deve poter annullare le modifiche che sta apportando a un \emph{template} personalizzato & \ucref{9.1} \\
 \hline
-R-37-F-P & L'utente deve poter annullare l'eliminazione di un \emph{template} personalizzato & \ucref{10.1} \\
+R-37-F-P & L'utente deve poter eliminare un \emph{template} personalizzato & \ucref{10} \\
 \hline
-R-38-F-P & L'utente deve poter visualizzare la lista di \emph{template} presenti sulla piattaforma & \ucref{11} \\
+R-38-F-P & L'utente deve poter annullare l'eliminazione di un \emph{template} personalizzato & \ucref{10.1} \\
 \hline
-R-39-F-P & L'utente deve poter visualizzare le caratteristiche di un singolo \emph{template} & \ucref{12} \\
+R-39-F-P & L'utente deve poter visualizzare la lista di \emph{template} presenti sulla piattaforma & \ucref{11} \\
+\hline
+R-40-F-P & L'utente deve poter visualizzare le caratteristiche di un singolo \emph{template} & \ucref{12} \\
 \end{longtable}
 \captionof{table}{Requisiti funzionali}
 \label{tab:requisiti-funzionali}
@@ -1046,8 +1063,8 @@ R-51-V-O & È necessario l'utilizzo dell'architettura \emph{cloud} AWS per la ge
 R-52-V-O & Il sistema deve essere containerizzato utilizzando \emph{\gls{docker}} (v27.x o compatibile) & Azienda \\
 \hline
 R-53-V-O & Il sistema deve interrompere l'elaborazione se il tempo di risposta di un agente supera 5 minuti consecutivi & Analisi interna \\
-\hline
-R-54-V-O & La dimensione massima di un documento caricabile sulla piattaforma è di 15 MB & Analisi interna \\
+% \hline
+% R-54-V-O & La dimensione massima di un documento caricabile sulla piattaforma è di 15 MB & Analisi interna \\
 \hline
 \rowcolor{white}
 \end{longtable}
