@@ -540,8 +540,6 @@ In questa sezione vengono descritti gli attori che interagiscono con il sistema.
     \begin{enumerate}
         \item L'utente vede il titolo del documento;
         \item L'utente vede un link alla descrizione del template utilizzato per l'analisi;
-        \item L'utente vede la data di inizio analisi;
-        \item L'utente vede il documento originale <<include>> \ucref{7.6};
         \item L'utente vede lo stato dell'analisi e il relativo report prodotto:
         \begin{enumerate}
             \item Analisi in corso: \ucref{7.1}
@@ -600,6 +598,8 @@ In questa sezione vengono descritti gli attori che interagiscono con il sistema.
 \usecaseprin{
     \begin{enumerate}
         \item L'utente visualizza i dati come descritto in \ucref{7};
+        \item L'utente vede la data di inizio analisi;
+        \item L'utente vede il documento originale <<include>> \ucref{7.6};
         \item L'utente vede il \emph{quality score} dell'analisi effettuata per gli aspetti di: sezioni mancanti, limiti di lunghezza e rispetto della consistenza contenutistica;
         \item L'utente visualizza il \emph{report} prodotto dall'analisi \emph{\gls{rulebased}} <<include>> \ucref{7.3};
         \item L'utente visualizza il \emph{report} prodotto dall'analisi \gls{ai} <<include>> \ucref{7.4}.
@@ -665,6 +665,8 @@ In questa sezione vengono descritti gli attori che interagiscono con il sistema.
 \usecasetrig{Caricamento della schermata di visualizzazione \emph{report}}
 \usecaseprin{
     \begin{enumerate}
+        \item L'utente vede la data di inizio analisi;
+        \item L'utente vede il documento originale <<include>> \ucref{7.6};
         \item L'utente vede quale errore ha impedito l'analisi corretta del documento;
         \item L'utente vede un pulsante per riprovare l'analisi.
     \end{enumerate}
@@ -1177,7 +1179,7 @@ R-25-F-O & L'utente deve poter visualizzare il \emph{report} dell'analisi \gls{a
 \hline
 R-26-F-O & L'utente deve visualizzare l'eventuale \emph{report} di errore per un'analisi su un documento & \ucref{7.5} \\
 \hline
-R-27-F-O & L'utente deve poter visualizzare il documento originale & \ucref{7.6} \\
+R-27-F-D & L'utente deve poter visualizzare il documento originale & \ucref{7.6} \\
 \hline
 R-28-F-D & L'utente deve poter scaricare la versione originale di un documento precedentemente caricato & \ucref{7.7} \\
 \hline
