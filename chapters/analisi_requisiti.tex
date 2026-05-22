@@ -75,20 +75,17 @@ In questa sezione vengono descritti gli attori che interagiscono con il sistema.
 \usecaseprin{
     \begin{enumerate}
         \item L'admin inserisce l'email dell'utente;
-        \item L'admin inserisce la password;
-        \item L'admin re-inserisce la password per confermarla;
         \item L'admin conferma la creazione dell'account.
     \end{enumerate}
 }
 \usecasealt{
     \begin{itemize}
-        \item L'admin inserisce una password non valida <<extend>> \ucref{1.1}
-        \item L'admin inserisce un'email non valida <<extend>> \ucref{1.2}
-        \item L'admin esprime la volontà di annullare la registrazione <<extend>> \ucref{1.3}
+        \item L'admin inserisce un'email non valida <<extend>> \ucref{1.1}
+        \item L'admin esprime la volontà di annullare la registrazione <<extend>> \ucref{1.2}
     \end{itemize}
 }
 \usecasepost{L'utente viene registrato all'interno della piattaforma}
-\usecaseext{\ucref{1.1}, \ucref{1.2}, \ucref{1.3}}
+\usecaseext{\ucref{1.1}, \ucref{1.2}}
 \end{usecase}
 
 \begin{figure}[h]
@@ -97,23 +94,8 @@ In questa sezione vengono descritti gli attori che interagiscono con il sistema.
     \caption{UC1 - Registrazione}
 \end{figure}
 
-\begin{usecase}{1.1}{Inserimento di una password non valida}
+\begin{usecase}{1.1}{Inserimento di una mail non valida}
 \label{uc:1.1}
-\usecaseactors{Admin}
-\usecasepre{L'admin si trova nella pagina di creazione utente}
-\usecasedesc{L'admin è nella fase di registrazione utente, ha confermato la creazione dell'account, ma la password inserita non è valida e viene notificato}
-\usecasetrig{L'admin inserisce una password non valida e prova a registrare l'account}
-\usecaseprin{
-    \begin{enumerate}
-        \item L'admin inserisce una password non valida (non rispetta la sintassi richiesta o non c'è uguaglianza tra la password inserita e quella di conferma);
-        \item L'admin conferma la creazione dell'account.
-    \end{enumerate}
-}
-\usecasepost{Viene mostrato l'errore all'admin, con la possibilità di riprovare la registrazione}
-\end{usecase}
-
-\begin{usecase}{1.2}{Inserimento di una mail non valida}
-\label{uc:1.2}
 \usecaseactors{Admin}
 \usecasepre{L'admin si trova nella pagina di creazione utente}
 \usecasedesc{L'admin è nella fase di registrazione utente, ha confermato la creazione dell'account, ma l'email inserita non è valida e viene notificato}
@@ -127,8 +109,8 @@ In questa sezione vengono descritti gli attori che interagiscono con il sistema.
 \usecasepost{Viene mostrato l'errore all'admin, con la possibilità di riprovare la registrazione}
 \end{usecase}
 
-\begin{usecase}{1.3}{Annullamento registrazione}
-\label{uc:1.3}
+\begin{usecase}{1.2}{Annullamento registrazione}
+\label{uc:1.2}
 \usecaseactors{Admin}
 \usecasepre{L'admin si trova nella pagina di creazione utente e non ha ancora premuto il pulsante di conferma}
 \usecasedesc{L'admin si trova in fase di registrazione utente e decide di annullare l'operazione}
@@ -217,10 +199,11 @@ In questa sezione vengono descritti gli attori che interagiscono con il sistema.
     \begin{itemize}
         \item L'utente inserisce delle credenziali non valide <<extend>> \ucref{3.1}
         \item L'utente esprime la volontà di annullare l'accesso <<extend>> \ucref{3.2}
+        \item L'utente ha dimenticato le credenziali di accesso <<extend>> \ucref{3.3}
     \end{itemize}
 }
 \usecasepost{L'utente ha effettuato l'accesso e viene reindirizzato alla \emph{dashboard} dell'applicativo}
-\usecaseext{\ucref{3.1}, \ucref{3.2}}
+\usecaseext{\ucref{3.1}, \ucref{3.2}, \ucref{3.3}}
 \end{usecase}
 
 \begin{figure}[h]
@@ -257,6 +240,49 @@ In questa sezione vengono descritti gli attori che interagiscono con il sistema.
     \end{enumerate}
 }
 \usecasepost{L'utente viene reindirizzato alla \emph{home} per utenti non autenticati}
+\end{usecase}
+
+\begin{usecase}{3.3}{Recupero password}
+\label{uc:3.3}
+\usecaseactors{Utente non autenticato}
+\usecasepre{L'utente si trova nella pagina di accesso alla piattaforma}
+\usecasedesc{Un utente non autenticato recupera la password dell'account}
+\usecasetrig{L'utente clicca il link per il recupero password}
+\usecaseprin{
+    \begin{enumerate}
+        \item L'utente viene reindirizzato alla pagina di recupero password;
+        \item L'utente inserisce la propria email associata all'account dell'applicativo web.
+        \item L'utente clicca il pulsante per recuperare la password.
+    \end{enumerate}
+}
+\usecasealt{
+    \begin{itemize}
+        \item L'utente clicca il pulsante per annullare il recupero della password <<extend>> \ucref{3.4}
+    \end{itemize}
+}
+\usecaseext{\ucref{3.4}}
+\usecasepost{All'utente viene inviata un'email per recuperare la password}
+\end{usecase}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=1\textwidth]{usecase/UC3.3}
+    \caption{UC3.3 - Recupero password}
+\end{figure}
+
+\begin{usecase}{3.4}{Annullamento recupero password}
+\label{uc:3.4}
+\usecaseactors{Utente non autenticato}
+\usecasepre{L'utente si trova nella pagina di recupero password}
+\usecasedesc{Un utente non autenticato annulla la procedura di recupero password}
+\usecasetrig{L'utente clicca il pulsante per annullare il recupero password}
+\usecaseprin{
+    \begin{enumerate}
+        \item L'utente viene reindirizzato alla home;
+        \item La procedura per il recupero password è stata interrotta;
+    \end{enumerate}
+}
+\usecasepost{L'utente è tornato alla home senza aver recuprato la password}
 \end{usecase}
 
 \begin{usecase}{4}{Logout}
@@ -305,12 +331,15 @@ In questa sezione vengono descritti gli attori che interagiscono con il sistema.
 \usecasetrig{L'utente ha effettuato l'accesso con successo}
 \usecaseprin{
     \begin{enumerate}
+        \item L'utente visualizza le operazioni disponibili <<include>> \ucref{6.8};
         \item L'utente visualizza lo storico dei \emph{report} effettuati <<include>> \ucref{6.1};
-        \item L'utente visualizza l'area dove può importare un nuovo documento <<include>> \ucref{6.4}.
+        \item L'utente visualizza l'area dove può importare un nuovo documento \ucref{6.4};
+        \item L'utente visualizza l'email associata al suo account;
+        \item L'utente visualizza il pulsante per il logout.
     \end{enumerate}
 }
 \usecasepost{L'utente è a conoscenza delle operazioni che può effettuare e dei documenti che ha già fatto analizzare}
-\usecaseincl{\ucref{6.1}, \ucref{6.4}}
+\usecaseincl{\ucref{6.1}, \ucref{6.8}}
 \end{usecase}
 
 \begin{figure}[h]
@@ -382,30 +411,8 @@ In questa sezione vengono descritti gli attori che interagiscono con il sistema.
 \usecasepost{Il \emph{report} non viene eliminato}
 \end{usecase}
 
-\begin{usecase}{6.4}{Visualizzazione area caricamento documento}
+\begin{usecase}{6.4}{Caricamento del documento}
 \label{uc:6.4}
-\usecaseactors{Utente autenticato}
-\usecasepre{L'utente si trova sulla \emph{dashboard}}
-\usecasedesc{L'utente visualizza l'area per il caricamento di un documento}
-\usecasetrig{Caricamento della schermata della \emph{dashboard}}
-\usecaseprin{
-    \begin{enumerate}
-        \item L'utente visualizza una descrizione di ciò che viene analizzato nel documento;
-        \item L'utente visualizza l'area per il \emph{drag\&drop} del documento <<include>> \ucref{6.5}.
-    \end{enumerate}
-}
-\usecasepost{L'utente è a conoscenza delle operazioni che può effettuare}
-\usecaseincl{\ucref{6.5}}
-\end{usecase}
-
-\begin{figure}[h]
-    \centering
-    \includegraphics[width=1\textwidth]{usecase/UC6.4}
-    \caption{UC6.4 - Visualizzazione area caricamento di un documento}
-\end{figure}
-
-\begin{usecase}{6.5}{Caricamento del documento}
-\label{uc:6.5}
 \usecaseactors{Utente autenticato}
 \usecasepre{L'utente si trova sulla \emph{dashboard}}
 \usecasedesc{L'utente carica un documento per avviarne l'analisi}
@@ -414,30 +421,30 @@ In questa sezione vengono descritti gli attori che interagiscono con il sistema.
     \begin{enumerate}
         \item L'utente visualizza i formati di documento accettati nell'area del \emph{drag\&drop} (PDF, MD, DOCX);
         \item L'utente carica un documento trascinandolo tramite \emph{drag\&drop} o selezionandolo tramite percorso sul proprio dispositivo;
-        \item L'utente seleziona la tipologia di documento <<include>> \ucref{6.8};
+        \item L'utente seleziona la tipologia di documento <<include>> \ucref{6.7};
         \item L'utente clicca sul pulsante per avviare l'analisi;
         \item L'utente viene reindirizzato alla pagina di visualizzazione \emph{report} \ucref{7}.
     \end{enumerate}
 }
 \usecasealt{
     \begin{itemize}
-        \item L'utente annulla il caricamento del documento <<extend>> \ucref{6.6}
-        \item Il caricamento del documento non va a buon fine <<extend>> \ucref{6.7}
+        \item L'utente annulla il caricamento del documento <<extend>> \ucref{6.5}
+        \item Il caricamento del documento non va a buon fine <<extend>> \ucref{6.6}
     \end{itemize}
 }
 \usecasepost{L'analisi viene avviata, il documento viene aggiunto allo storico e l'utente viene reindirizzato alla pagina di visualizzazione del \emph{report} \ucref{7}}
-\usecaseincl{\ucref{6.8}}
-\usecaseext{\ucref{6.6}, \ucref{6.7}}
+\usecaseincl{\ucref{6.7}}
+\usecaseext{\ucref{6.5}, \ucref{6.6}}
 \end{usecase}
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=1\textwidth]{usecase/UC6.5}
-    \caption{UC6.5 - Caricamento di un documento}
+    \includegraphics[width=1\textwidth]{usecase/UC6.4}
+    \caption{UC6.4 - Caricamento di un documento}
 \end{figure}
 
-\begin{usecase}{6.6}{Annullamento caricamento del documento}
-\label{uc:6.6}
+\begin{usecase}{6.5}{Annullamento caricamento del documento}
+\label{uc:6.5}
 \usecaseactors{Utente autenticato}
 \usecasepre{L'utente ha selezionato un file da importare}
 \usecasedesc{L'utente annulla il caricamento del documento prima dell'avvio dell'analisi}
@@ -452,8 +459,8 @@ In questa sezione vengono descritti gli attori che interagiscono con il sistema.
 \usecasepost{Il documento selezionato non viene caricato per l'analisi}
 \end{usecase}
 
-\begin{usecase}{6.7}{Errore caricamento documento}
-\label{uc:6.7}
+\begin{usecase}{6.6}{Errore caricamento documento}
+\label{uc:6.6}
 \usecaseactors{Utente autenticato}
 \usecasepre{L'utente ha provato ad importare un file da analizzare}
 \usecasedesc{Il documento non viene caricato correttamente e l'utente viene avvisato}
@@ -467,19 +474,60 @@ In questa sezione vengono descritti gli attori che interagiscono con il sistema.
 \usecasepost{L'utente è a conoscenza dell'errore e può riprovare il caricamento del documento}
 \end{usecase}
 
-\begin{usecase}{6.8}{Selezione tipologia documento}
-\label{uc:6.8}
+\begin{usecase}{6.7}{Selezione tipologia documento}
+\label{uc:6.7}
 \usecaseactors{Utente autenticato}
 \usecasepre{Il file selezionato è delle dimensioni consentite}
 \usecasedesc{L'utente seleziona la tipologia di documento a cui appartiene il file in analisi}
 \usecasetrig{L'utente ha inserito un file per l'analisi}
 \usecaseprin{
     \begin{enumerate}
-        \item L'utente visualizza una lista a tendina di tipologie di documento (es. contratto di lavoro, bolletta ecc.);
+        \item L'utente visualizza le tipologie di documento supportate per l'analisi (es. contratto di lavoro, bolletta ecc.);
         \item L'utente seleziona la tipologia desiderata.
     \end{enumerate}
 }
 \usecasepost{L'utente ha espresso la tipologia di documento per il file in analisi}
+\end{usecase}
+
+\begin{usecase}{6.8}{Visualizzazione operazioni disponibili}
+\label{uc:6.8}
+\usecaseactors{Utente autenticato}
+\usecasepre{L'utente è autenticato nella piattaforma}
+\usecasedesc{L'utente visualizza le operazioni che può svolgere all'interno dell’applicativo}
+\usecasetrig{Caricamento della dashboard}
+\usecaseprin{
+    \begin{enumerate}
+        \item L'utente visualizza il link per l'analisi di un nuovo documento \ucref{6.4}; 
+        \item L'utente visualizza il link per la ricerca tra documenti \ucref{6.9};
+        \item Se l'utente autenticato è admin, visualizza il link per gestire gli utenti \ucref{5};
+        \item L'utente visualizza il link per importare un template \ucref{8.3};
+        \item L'utente visualizza il link per creare un nuovo template \ucref{8};
+        \item L'utente visualizza il link per gestire i propri template \ucref{11}.
+    \end{enumerate}
+}
+\usecasepost{L'utente è a conoscenza delle operazioni che può svolgere}
+\end{usecase}
+
+\begin{usecase}{6.9}{Ricerca dei documenti}
+\label{uc:6.9}
+\usecaseactors{Utente autenticato}
+\usecasepre{L'utente possiede almeno un documento analizzato}
+\usecasedesc{L'utente cerca un documento tra quelli che ha analizzato}
+\usecasetrig{L'utente ha cliccato sul link per la ricerca di documenti \ucref{6.8}}
+\usecaseprin{
+    \begin{enumerate}
+        \item L'utente visualizza una barra di ricerca su cui può digitare il nome di un documento; 
+        \item L'utente visualizza una serie di documenti il cui nome corrisponde con quanto cercato, per ogni documento viene visualizzato:
+        \begin{enumerate}
+            \item L'utente visualizza il nome del documento;
+            \item L'utente visualizza il formato del documento;
+            \item L'utente visualizza lo stato di completamento del documento;
+            \item L'utente visualizza la data di analisi del documento.
+        \end{enumerate}
+        \item L'utente può cliccare sul documento per vederne i dettagli \ucref{7}.
+    \end{enumerate}
+}
+\usecasepost{L'utente ha trovato il documento che cercava}
 \end{usecase}
 
 \begin{usecase}{7}{Visualizzazione report}
@@ -491,17 +539,21 @@ In questa sezione vengono descritti gli attori che interagiscono con il sistema.
 \usecaseprin{
     \begin{enumerate}
         \item L'utente vede il titolo del documento;
+        \item L'utente vede un link alla descrizione del template utilizzato per l'analisi;
         \item L'utente vede la data di inizio analisi;
-        \item L'utente vede la tipologia di documento caricato;
-        \item L'utente vede lo stato dell'analisi;
-        \item L'utente vede il \emph{quality score} dell'analisi effettuata;
         \item L'utente vede il documento originale <<include>> \ucref{7.6};
-        \item L'utente vede il pulsante per eliminare il \emph{report} dallo storico \ucref{6.2}.
+        \item L'utente vede lo stato dell'analisi e il relativo report prodotto:
+        \begin{enumerate}
+            \item Analisi in corso: \ucref{7.1}
+            \item Analisi conclusa: \ucref{7.2}
+            \item Analisi con errore: \ucref{7.5}
+            \item Analisi interrotta: \ucref{7.12}
+        \end{enumerate}
     \end{enumerate}
 }
 \usecasepost{L'utente ha preso conoscenza del \emph{report} prodotto}
 \usecaseincl{\ucref{7.6}}
-\usecasegen{\ucref{7.1}, \ucref{7.2}, \ucref{7.5}}
+\usecasegen{\ucref{7.1}, \ucref{7.2}, \ucref{7.5}, \ucref{7.12}}
 \end{usecase}
 
 
@@ -521,10 +573,23 @@ In questa sezione vengono descritti gli attori che interagiscono con il sistema.
     \begin{enumerate}
         \item L'utente visualizza i dati come descritto in \ucref{7};
         \item L'utente vede l'indicatore di caricamento in corso per l'analisi avviata.
+        \item L'utente vede il pulsante per annullare l'analisi.
+    \end{enumerate}
+}
+\usecasealt{
+    \begin{enumerate}
+        \item L'utente interrompe l'analisi <<extend>> \ucref{7.11}.
     \end{enumerate}
 }
 \usecasepost{L'utente è a conoscenza dello stato di avanzamento dell'analisi}
+\usecaseext{ \ucref{7.11}}
 \end{usecase}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=1\textwidth]{usecase/UC7.1}
+    \caption{UC7.1 - Visualizzazione analisi in corso}
+\end{figure}
 
 \begin{usecase}{7.2}{Visualizzazione analisi conclusa}
 \label{uc:7.2}
@@ -535,7 +600,7 @@ In questa sezione vengono descritti gli attori che interagiscono con il sistema.
 \usecaseprin{
     \begin{enumerate}
         \item L'utente visualizza i dati come descritto in \ucref{7};
-        \item L'utente visualizza il \emph{quality score} del documento;
+        \item L'utente vede il \emph{quality score} dell'analisi effettuata per gli aspetti di: sezioni mancanti, limiti di lunghezza e rispetto della consistenza contenutistica;
         \item L'utente visualizza il \emph{report} prodotto dall'analisi \emph{\gls{rulebased}} <<include>> \ucref{7.3};
         \item L'utente visualizza il \emph{report} prodotto dall'analisi \gls{ai} <<include>> \ucref{7.4}.
     \end{enumerate}
@@ -577,14 +642,15 @@ In questa sezione vengono descritti gli attori che interagiscono con il sistema.
         \item Se presenti, l'utente visualizza:
         \begin{itemize}
             \item quali porzioni di testo presentano violazioni delle \emph{policy} aziendali;
-            \item i suggerimenti proposti;
             \item quale \emph{policy} è stata violata.
+            \item i suggerimenti proposti;
+            \item le motivazioni dell'errore;
         \end{itemize}
         \item Se presenti, l'utente visualizza:
         \begin{itemize}
             \item le porzioni di testo che presentano errori di coerenza;
             \item i relativi suggerimenti di miglioria;
-            \item la motivazione dell'errore e del suggerimento proposto.
+            \item la motivazione dell'errore.
         \end{itemize}
     \end{enumerate}
 }
@@ -615,6 +681,8 @@ In questa sezione vengono descritti gli attori che interagiscono con il sistema.
 \usecaseprin{
     \begin{enumerate}
         \item L'utente visualizza il contenuto del documento caricato;
+        \item L'utente vede il formato di documento caricato;
+        \item L'utente vede il peso in MB del documento originale;
         \item L'utente visualizza il pulsante per scaricare il documento originale \ucref{7.7}.
     \end{enumerate}
 }
@@ -670,8 +738,8 @@ In questa sezione vengono descritti gli attori che interagiscono con il sistema.
 \label{uc:7.10}
 \usecaseactors{Utente autenticato}
 \usecasepre{L'utente ha avviato almeno un'analisi su un documento e si trova sulla pagina di visualizzazione del \emph{report}}
-\usecasedesc{L'utente scarica sul proprio dispositivo il \emph{report} in formato PDF}
-\usecasetrig{L'utente clicca sul pulsante per scaricare il PDF del \emph{report}}
+\usecasedesc{L'utente scarica sul proprio dispositivo il \emph{report} in formato JSON}
+\usecasetrig{L'utente clicca sul pulsante per scaricare il JSON del \emph{report}}
 \usecaseprin{
     \begin{enumerate}
         \item L'utente visualizza il pulsante per scaricare il JSON del \emph{report};
@@ -679,6 +747,36 @@ In questa sezione vengono descritti gli attori che interagiscono con il sistema.
     \end{enumerate}
 }
 \usecasepost{L'utente ha scaricato il \emph{report} in formato JSON sul proprio dispositivo}
+\end{usecase}
+
+\begin{usecase}{7.11}{Interruzione di un'analisi in corso}
+\label{uc:7.11}
+\usecaseactors{Utente autenticato}
+\usecasepre{L'utente si trova sulla pagina di analisi in corso \ucref{7.1}}
+\usecasedesc{L'utente annulla un'analisi in corso}
+\usecasetrig{L'utente clicca sul pulsante per annullare l'analisi in corso}
+\usecaseprin{
+    \begin{enumerate}
+        \item L'utente visualizza il pulsante per annullare l'analisi in corso;
+        \item L'utente clicca sul pulsante per annullare l'analisi;
+        \item L'utente visualizza la pagina del report per un'analisi interrotta \ucref{7.12}. 
+    \end{enumerate}
+}
+\usecasepost{L'utente ha interrotto un'analisi in corso con successo}
+\end{usecase}
+
+\begin{usecase}{7.12}{Visualizzazione analisi interrotta}
+\label{uc:7.12}
+\usecaseactors{Utente autenticato}
+\usecasepre{L'utente ha avviato almeno un'analisi su un documento e si trova sulla pagina di visualizzazione del \emph{report}}
+\usecasedesc{L'utente visualizza l'avviso di analisi interrota dall'utente}
+\usecasetrig{Caricamento della schermata di visualizzazione \emph{report}}
+\usecaseprin{
+    \begin{enumerate}
+        \item L'utente visualizza un avviso che comunica l'interruzione manuale dell'analisi in corso;
+    \end{enumerate}
+}
+\usecasepost{L'utente ha preso conoscenza di aver interrotto l'analisi}
 \end{usecase}
 
 \begin{usecase}{8}{Aggiunta di template personalizzati}
@@ -749,6 +847,59 @@ In questa sezione vengono descritti gli attori che interagiscono con il sistema.
 \usecasepost{Il \emph{template} non viene salvato}
 \end{usecase}
 
+\begin{usecase}{8.3}{Importazione template}
+\label{uc:8.3}
+\usecaseactors{Utente autenticato}
+\usecasepre{L'utente ha effettuato l'accesso alla piattaforma}
+\usecasedesc{L'utente aggiunge un \emph{template} per la tipologia di un documento da analizzare}
+\usecasetrig{Caricamento della schermata della \emph{dashboard}}
+\usecaseprin{
+    \begin{enumerate}
+        \item L'utente seleziona un file JSON che contiene il template da importare;
+        \item L'utente conferma l'importazione del file selezionato;
+        \item L'utente viene reindirizzato alla lista di gestione template \ucref{11.1}.
+    \end{enumerate}
+}
+\usecasealt{
+    \begin{itemize}
+        \item L'utente annulla l'importazione del template <<extend>> \ucref{8.4}
+        \item L'utente inserisce un JSON corrotto o che non contiene la descrizione di un template \ucref{8.5}
+    \end{itemize}
+}
+\usecasepost{L'utente ha importato un nuovo template}
+\usecaseext{\ucref{8.4}, \ucref{8.5}}
+\end{usecase}
+
+\begin{usecase}{8.4}{Annullamento importazione template}
+\label{uc:8.4}
+\usecaseactors{Utente autenticato}
+\usecasepre{L'utente si trova nella pagina per importare un template \ucref{8.3}}
+\usecasedesc{L'utente annulla l'importazione di un template}
+\usecasetrig{L'utente annulla l'importazione del template}
+\usecaseprin{
+    \begin{enumerate}
+        \item L'utente viene reindirizzato alla pagina di visualizzazione lista template.
+    \end{enumerate}
+}
+\usecasepost{L'utente non ha importato nessun template}
+\end{usecase}
+
+\begin{usecase}{8.5}{Importazione di un JSON corrotto}
+\label{uc:8.5}
+\usecaseactors{Utente autenticato}
+\usecasepre{L'utente si trova nella pagina per importare un template \ucref{8.3}}
+\usecasedesc{L'utente seleziona un template corrotto e viene notificato}
+\usecasetrig{L'utente prova a importare un template corrotto}
+\usecaseprin{
+    \begin{enumerate}
+        \item Il sistema riscontra che il file selezionato non corrisponde a una descrizione di template;
+        \item L'utente viene notificato dell'errore sul file;
+        \item L'utente può provare a ricarica un altro file.
+    \end{enumerate}
+}
+\usecasepost{L'utente è a conoscenza di aver selezionato un file non valido}
+\end{usecase}
+
 \begin{usecase}{9}{Modifica template personalizzato}
 \label{uc:9}
 \usecaseactors{Utente autenticato}
@@ -757,8 +908,7 @@ In questa sezione vengono descritti gli attori che interagiscono con il sistema.
 \usecasetrig{Caricamento della schermata di visualizzazione singolo \emph{template}}
 \usecaseprin{
     \begin{enumerate}
-        \item L'utente visualizza un pulsante per modificare il \emph{template};
-        \item L'utente clicca sul pulsante per modificare il \emph{template};
+        \item L'utente visualizza il form per la  modifica del template;
         \item L'utente può modificare i campi del \emph{template}:
         \begin{itemize}
             \item nome del \emph{template};
@@ -851,20 +1001,39 @@ In questa sezione vengono descritti gli attori che interagiscono con il sistema.
 \usecaseactors{Utente autenticato}
 \usecasepre{L'utente è autenticato alla piattaforma}
 \usecasedesc{L'utente visualizza la lista di tutti i \emph{template} esistenti e associati al suo account}
-\usecasetrig{L'utente ha cliccato il pulsante per la visualizzazione della lista \emph{template}}
+\usecasetrig{L'utente ha cliccato il pulsante per la visualizzazione dei suoi \emph{template}}
 \usecaseprin{
     \begin{enumerate}
         \item L'utente visualizza una barra di ricerca per nome del \emph{template};
-        \item L'utente visualizza una lista di \emph{template}; per ogni elemento:
-        \begin{itemize}
-            \item nome del \emph{template};
-            \item formati accettati;
-            \item stato di creazione (default o personalizzato);
-            \item se si tratta di un \emph{template} personalizzato, il pulsante per l'eliminazione.
-        \end{itemize}
+        \item L'utente visualizza la lista dei template che possiede;
+        \item L'utente può cliccare sul template per vederne le specifiche.
     \end{enumerate}
 }
 \usecasepost{L'utente è a conoscenza dei \emph{template} esistenti associati al suo account}
+\usecasegen{\ucref{11.1}}
+\end{usecase}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=1\textwidth]{usecase/UC11}
+    \caption{UC11 - Visualizzazione lista template}
+\end{figure}
+
+\begin{usecase}{11.1}{Gestisci template}
+\label{uc:11.1}
+\usecaseactors{Utente autenticato}
+\usecasepre{L'utente è autenticato alla piattaforma}
+\usecasedesc{L'utente visualizza la lista dei template personalizzati associati al suo account}
+\usecasetrig{L'utente ha cliccato il pulsante per la gestione dei suoi \emph{template}}
+\usecaseprin{
+    \begin{enumerate}
+        \item L'utente visualizza i dati come descritto in \ucref{11};
+        \item L'utente visualizza un pulsante per aggiungere un nuovo template \ucref{8};
+        \item L'utente visualizza un pulsante per importare un template \ucref{8.3};
+        \item Per ogni template nella lista, viene visualizzato un pulsante per l'eliminazione.
+    \end{enumerate}
+}
+\usecasepost{L'utente è a conoscenza dei \emph{template} personalizzati e associati al suo account}
 \end{usecase}
 
 \begin{usecase}{12}{Visualizzazione singolo template}
@@ -878,25 +1047,59 @@ In questa sezione vengono descritti gli attori che interagiscono con il sistema.
         \item L'utente visualizza le caratteristiche del \emph{template}:
         \begin{itemize}
             \item nome del \emph{template};
-            \item professionista che deve controllare il documento;
             \item \emph{policy} aziendali;
             \item minimo numero di caratteri per sezione;
             \item massimo numero di caratteri per sezione;
             \item nomi delle sezioni obbligatorie;
-            \item formato di documenti accettati (PDF, MD, DOCX);
             \item stato di creazione (default o personalizzato).
         \end{itemize}
-        \item L'utente visualizza un pulsante per modificare il \emph{template}, se si tratta di un \emph{template} personalizzato;
-        \item L'utente visualizza un pulsante per eliminare il \emph{template}, se si tratta di un \emph{template} personalizzato.
     \end{enumerate}
 }
 \usecasepost{L'utente è a conoscenza delle caratteristiche del \emph{template} selezionato}
+\end{usecase}
+\usecasegen{\ucref{12.1}}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=1\textwidth]{usecase/UC12}
+    \caption{UC12 - Visualizzazione singolo template}
+\end{figure}
+
+\begin{usecase}{12.1}{Gestione singolo template personalizzato}
+\label{uc:12.1}
+\usecaseactors{Utente autenticato}
+\usecasepre{L'utente ha inserito almeno un template personalizzato}
+\usecasedesc{L'utente visualizza le caratteristiche di un \emph{template} personalizzato su cui ha cliccato}
+\usecasetrig{L'utente ha cliccato un \emph{template} dalla lista di gestione \emph{template} \ucref{11.1}}
+\usecaseprin{
+    \begin{enumerate}
+        \item L'utente visualizza i dati come descritto in \ucref{12};
+        \item L'utente visualizza un pulsante per modificare il \emph{template};
+        \item L'utente visualizza un pulsante per eliminare il \emph{template};
+        \item L'utente visualizza un pulsante per esportare il \emph{template}.
+    \end{enumerate}
+}
+\usecasepost{L'utente è a conoscenza delle caratteristiche del \emph{template} selezionato e delle operazioni che può fare}
+\end{usecase}
+
+\begin{usecase}{13}{Esportazione di un template personalizzato}
+\label{uc:13}
+\usecaseactors{Utente autenticato}
+\usecasepre{L'utente ha creato almeno un \emph{template} personalizzato}
+\usecasedesc{L'utente esporta un \emph{template} esistente e personalizzato}
+\usecasetrig{L'utente ha cliccato il pulsante per l'esportazione del template}
+\usecaseprin{
+    \begin{enumerate}
+        \item L'utente visualizza il download del template in JSON;
+        \item L'utente ha scaricato il JSON per un template personalizzato.
+    \end{enumerate}
+}
+\usecasepost{Il JSON del \emph{template} viene salvato sul PC dell'utente}
 \end{usecase}
 
 \section{Tracciamento requisiti}
 
 In questa sezione vengono elencati i requisiti individuati. Ogni requisito è identificato da un codice univoco nel formato:
-
 \begin{center}
     \textbf{R-[numero]-[tipologia]-[priorità]}
 \end{center}
@@ -911,7 +1114,7 @@ I requisiti funzionali descrivono le funzionalità che il sistema deve offrire a
 \subsection{Requisiti funzionali}
 
 \rowcolors{2}{tablerowgreen}{white}
-\begin{longtable}{L{2cm} L{6.5cm} L{3cm}}
+\begin{longtable}{L{2cm} L{6.4cm} L{3cm}}
 \hline
 \rowcolor{headergreen}
 \thead{Codice} & \thead{Descrizione} & \thead{Fonti} \\
@@ -924,9 +1127,9 @@ I requisiti funzionali descrivono le funzionalità che il sistema deve offrire a
 
 R-1-F-O & L'admin deve poter registrare un nuovo utente & \ucref{1} \\
 \hline
-R-2-F-O & L'admin deve poter visualizzare eventuali errori durante la registrazione & \ucref{1.1}, \ucref{1.2} \\
+R-2-F-O & L'admin deve poter visualizzare eventuali errori durante la registrazione & \ucref{1.1} \\
 \hline
-R-3-F-O & L'admin deve poter annullare la registrazione di un nuovo utente & \ucref{1.3} \\
+R-3-F-O & L'admin deve poter annullare la registrazione di un nuovo utente & \ucref{1.2} \\
 \hline
 R-4-F-O & L'admin deve poter eliminare un utente non admin & \ucref{2} \\
 \hline
@@ -954,13 +1157,13 @@ R-15-F-O & L'utente deve poter annullare l'eliminazione di un \emph{report} & \u
 \hline
 R-16-F-O & L'utente deve poter visualizzare l'area per il caricamento di un documento & \ucref{6.4} \\
 \hline
-R-17-F-O & L'utente deve poter caricare un documento per analizzarlo & \ucref{6.5} \\
+R-17-F-O & L'utente deve poter caricare un documento per analizzarlo & \ucref{6.4} \\
 \hline
-R-18-F-O & L'utente deve poter selezionare la tipologia di documento in esame & \ucref{6.8} \\
+R-18-F-O & L'utente deve poter selezionare la tipologia di documento in esame & \ucref{6.7} \\
 \hline
-R-19-F-O & L'utente deve poter annullare il caricamento del documento & \ucref{6.6} \\
+R-19-F-O & L'utente deve poter annullare il caricamento del documento & \ucref{6.5} \\
 \hline
-R-20-F-O & L'utente deve visualizzare l'avviso di errore se il caricamento del documento non va a buon fine & \ucref{6.7} \\
+R-20-F-O & L'utente deve visualizzare l'avviso di errore se il caricamento del documento non va a buon fine & \ucref{6.6} \\
 \hline
 R-21-F-O & L'utente deve poter visualizzare il \emph{report} generato & \ucref{7} \\
 \hline
@@ -1001,6 +1204,22 @@ R-38-F-P & L'utente deve poter annullare l'eliminazione di un \emph{template} pe
 R-39-F-P & L'utente deve poter visualizzare la lista di \emph{template} presenti sulla piattaforma & \ucref{11} \\
 \hline
 R-40-F-P & L'utente deve poter visualizzare le caratteristiche di un singolo \emph{template} & \ucref{12} \\
+\hline
+R-41-F-D & L'utente deve poter recuperare la password & \ucref{3.3} \\
+\hline
+R-42-F-D & L'utente deve poter annullare il recupero password & \ucref{3.4} \\
+\hline
+R-43-F-D & L'utente deve poter interrompere un'analisi in corso & \ucref{7.11} \\
+\hline
+R-44-F-D & L'utente deve visualizzare l'avviso di analisi interrotta & \ucref{7.12} \\
+\hline
+R-45-F-P & L'utente deve poter importare un template da file JSON & \ucref{8.3} \\
+\hline
+R-46-F-P & L'utente deve poter annullare l'importazione di un template & \ucref{8.4} \\
+\hline
+R-47-F-P & L'utente deve visualizzare un errore se il JSON importato non è valido & \ucref{8.5} \\
+\hline
+R-48-F-P & L'utente deve poter esportare un template personalizzato in formato JSON & \ucref{13} \\
 \end{longtable}
 \captionof{table}{Requisiti funzionali}
 \label{tab:requisiti-funzionali}
@@ -1008,7 +1227,7 @@ R-40-F-P & L'utente deve poter visualizzare le caratteristiche di un singolo \em
 \subsection{Requisiti qualitativi}
 
 \rowcolors{2}{tablerowgreen}{white}
-\begin{longtable}{L{2cm} L{6.5cm} L{3cm}}
+\begin{longtable}{L{2cm} L{6.4cm} L{3cm}}
 \hline
 \rowcolor{headergreen}
 \thead{Codice} & \thead{Descrizione} & \thead{Fonti} \\
@@ -1019,15 +1238,15 @@ R-40-F-P & L'utente deve poter visualizzare le caratteristiche di un singolo \em
 \endhead
 \endfoot
 
-R-40-Q-O & Il codice scritto deve essere versionabile tramite \emph{\gls{git}} & Azienda \\
+R-49-Q-O & Il codice scritto deve essere versionabile tramite \emph{\gls{git}} & Azienda \\
 \hline
-R-41-Q-O & Scrivere \emph{unit test} per il \emph{parser} dei documenti (PDF, DOCX, MD) con documenti campione & Azienda \\
+R-50-Q-O & Scrivere \emph{unit test} per il \emph{parser} dei documenti (PDF, DOCX, MD) con documenti campione & Azienda \\
 \hline
-R-42-Q-O & Scrivere \emph{unit test} per l'\emph{engine} \emph{\gls{rulebased}} & Azienda \\
+R-51-Q-O & Scrivere \emph{unit test} per l'\emph{engine} \emph{\gls{rulebased}} & Azienda \\
 \hline
-R-43-Q-O & Scrivere \emph{integration test} per gli \emph{endpoint} di \emph{upload} e analisi \emph{end-to-end} & Azienda \\
+R-52-Q-O & Scrivere \emph{integration test} per gli \emph{endpoint} di \emph{upload} e analisi \emph{end-to-end} & Azienda \\
 \hline
-R-44-Q-O & Testare i \emph{prompt} Claude con un insieme di documenti reali di qualità variabile & Azienda \\
+R-53-Q-O & Testare i \emph{prompt} Claude con un insieme di documenti reali di qualità variabile & Azienda \\
 \end{longtable}
 \captionof{table}{Requisiti qualitativi}
 \label{tab:requisiti-qualitativi}
@@ -1035,7 +1254,7 @@ R-44-Q-O & Testare i \emph{prompt} Claude con un insieme di documenti reali di q
 \subsection{Requisiti di vincolo}
 
 \rowcolors{2}{tablerowgreen}{white}
-\begin{longtable}{L{2cm} L{6.5cm} L{3cm}}
+\begin{longtable}{L{2cm} L{6.4cm} L{3cm}}
 \hline
 \rowcolor{headergreen}
 \thead{Codice} & \thead{Descrizione} & \thead{Fonti} \\
@@ -1046,23 +1265,23 @@ R-44-Q-O & Testare i \emph{prompt} Claude con un insieme di documenti reali di q
 \endhead
 \endfoot
 
-R-45-V-O & È necessario l'utilizzo di una \emph{monorepo} & Azienda \\
+R-54-V-O & È necessario l'utilizzo di una \emph{monorepo} & Azienda \\
 \hline
-R-46-V-O & È necessario l'utilizzo di Node.js (v22.x LTS) e TypeScript (v5.x) per lo sviluppo del \emph{backend} & Azienda \\
+R-55-V-O & È necessario l'utilizzo di Node.js (v22.x LTS) e TypeScript (v5.x) per lo sviluppo del \emph{backend} & Azienda \\
 \hline
-R-47-V-O & L'architettura \emph{backend} e le \gls{api} devono essere sviluppate utilizzando il \emph{framework} NestJS (v11.x) & Azienda \\
+R-56-V-O & L'architettura \emph{backend} e le \gls{api} devono essere sviluppate utilizzando il \emph{framework} NestJS (v11.x) & Azienda \\
 \hline
-R-48-V-O & È necessario l'utilizzo della libreria React.js (v19.x) per lo sviluppo del \emph{frontend} & Azienda \\
+R-57-V-O & È necessario l'utilizzo della libreria React.js (v19.x) per lo sviluppo del \emph{frontend} & Azienda \\
 \hline
-R-49-V-O & È necessario l'utilizzo di MongoDB (v8.x) per la gestione della persistenza dei dati & Azienda \\
+R-58-V-O & È necessario l'utilizzo di MongoDB (v8.x) per la gestione della persistenza dei dati & Azienda \\
 \hline
-R-50-V-O & È necessario l'utilizzo di \emph{\gls{github}} per il versionamento del codice & Azienda \\
+R-59-V-O & È necessario l'utilizzo di \emph{\gls{github}} per il versionamento del codice & Azienda \\
 \hline
-R-51-V-O & È necessario l'utilizzo dell'architettura \emph{cloud} AWS per la gestione degli agenti \gls{ai} e per lo \emph{storage} dei documenti tramite S3 & Azienda \\
+R-60-V-O & È necessario l'utilizzo dell'architettura \emph{cloud} AWS per la gestione degli agenti \gls{ai} e per lo \emph{storage} dei documenti tramite S3 & Azienda \\
 \hline
-R-52-V-O & Il sistema deve essere containerizzato utilizzando \emph{\gls{docker}} (v27.x o compatibile) & Azienda \\
+R-61-V-O & Il sistema deve essere containerizzato utilizzando \emph{\gls{docker}} (v27.x o compatibile) & Azienda \\
 \hline
-R-53-V-O & Il sistema deve interrompere l'elaborazione se il tempo di risposta di un agente supera 5 minuti consecutivi & Analisi interna \\
+R-62-V-O & Il sistema deve interrompere l'elaborazione se il tempo di risposta di un agente supera 5 minuti consecutivi & Analisi interna \\
 % \hline
 % R-54-V-O & La dimensione massima di un documento caricabile sulla piattaforma è di 15 MB & Analisi interna \\
 \hline

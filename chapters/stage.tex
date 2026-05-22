@@ -65,11 +65,15 @@ Di seguito vengono riportati i principali rischi individuati prima dell'avvio de
 \endhead
 \endfoot
 
-Tecnologie non conosciute & Alta & Medio & Valutazione delle competenze prima dell'avvio & Studio della documentazione ufficiale & Supporto del tutor aziendale \\
+Analisi \gls{llm} incompleta (falsi negativi) & Alta & Alto & Valutazione dei risultati su un insieme di documenti campione con errori noti & Suddivisione del documento in sezioni per l'analisi, anziché invio dell'intero testo & Segnalazione all'utente che l'analisi \gls{ai} potrebbe non rilevare tutti i problemi presenti \\
 \hline
-Ritardo nello sviluppo & Media & Alto & Monitoraggio settimanale tramite \gls{jira} & Pianificazione con priorità definite sin dall'inizio & Eliminazione dei requisiti desiderabili e facoltativi \\
+Analisi \gls{llm} imprecisa (falsi positivi) & Media & Medio & Verifica manuale dei \emph{report} generati su documenti corretti & Prompt strutturati con istruzioni esplicite sulla soglia di segnalazione & Segnalazione all'utente che l'analisi \gls{ai} potrebbe non rilevare tutti i problemi presenti \\
 \hline
-Comprensione errata dei requisiti & Media & Alto & Revisione con il responsabile prima dello sviluppo & Analisi con il responsabile durante la raccolta dei requisiti & Correzione dei requisiti con il tutor prima dell'implementazione \\
+Finestra di contesto insufficiente per documenti di grandi dimensioni & Media & Alto & Monitoraggio della lunghezza dei documenti inviati durante la fase di test & Suddivisione del documento in sezioni prima dell'invio al modello & Definizione di una dimensione massima per i documenti caricabili sulla piattaforma \\
+\hline
+Risposte del modello verbose o poco precise per sezione & Media & Medio & Verifica su documenti campione valutando la qualità e la concisione delle segnalazioni prodotte & Limitazione della lunghezza massima della risposta per singola sezione & Raffinamento del \emph{prompt} con esempi espliciti del formato di risposta atteso \\
+\hline
+Imprecisione del \emph{quality score} nella valutazione complessiva del documento & Media & Medio & Verifica su documenti campione con errori di gravità nota & Classificazione degli errori in tre livelli di gravità (basso, medio, alto) con pesi distinti nel calcolo dello \emph{score} & Presentazione dello \emph{score} come indicatore orientativo, accompagnato dal dettaglio delle singole segnalazioni \\
 \hline
 Eterogeneità dei formati documentali & Media & Medio & Verifica durante la fase di sviluppo dei \emph{parser} & Utilizzo di librerie consolidate per ogni formato (PDF, Word, Markdown) & Limitare i formati supportati ai più diffusi \\
 \hline
