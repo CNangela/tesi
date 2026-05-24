@@ -1,0 +1,65 @@
+\chapter{Tecnologie e fondamenti teorici}
+\label{cap:tecnologie_e_fondamenti_teorici}
+
+\section{Panoramica ad alto livello}
+Come descritto nella \hyperref[section:presentazione_progetto]{presentazione del progetto}, il sistema di analisi documentale adotta un approccio ibrido a due livelli distinti.\\
+
+Durante la progettazione si è scelto di non delegare a un Large Language Model operazioni risolvibili in modo deterministico: affidarsi a un LLM per compiti algoritmici introdurrebbe variabilità inutile, costi maggiori e difficoltà di testing. I controlli strutturali, come la verifica dei limiti di lunghezza delle sezioni, sono stati quindi affidati a un engine rule-based, riservando agli LLM esclusivamente le operazioni che richiedono comprensione del contesto e ragionamento semantico.\\
+
+Ai modelli LLM sono stati assegnati compiti che richiedono comprensione del contesto e ragionamento semantico: operazioni che, senza l'ausilio dell'intelligenza artificiale, sarebbero state esclusive alla revisione umana. Rientrano in questa categoria il rilevamento di incoerenze logiche tra paragrafi, la verifica del rispetto delle policy aziendali e il controllo della presenza delle sezioni obbligatorie, valutato sul contenuto semantico e non sulla corrispondenza letterale del titolo.\\
+
+Ulteriori responsabilità sono state affidate al backend. Il parsing dei documenti in ingresso, i quali possono presentarsi in formato PDF, DOCX o Markdown, viene gestito tramite il pattern \emph{Strategy}: il file viene ricevuto dal backend, di questo ne viene estratto il buffer tramite {\emph{\gls{multer}}\glsfirstoccur} e instradato al parser corretto in base all'estensione del documento caricato, producendo un output  uniforme in Markdown su cui operano entrambi i livelli di analisi. La gestione delle autorizzazioni si appoggia ad AWS Cognito, che definisce due ruoli distinti: \textit{user}, assegnato di default a ogni nuovo utente, e \textit{admin}, configurabile manualmente tramite Cognito e necessario per le operazioni di creazione ed eliminazione degli utenti; il backend verifica il token emesso da Cognito a ogni richiesta e nega l'accesso alle operazioni riservate se il ruolo non è sufficiente o se l'utente non è autenticato. Infine, poiché MongoDB non è un database relazionale e non supporta nativamente i vincoli di integrità referenziale, l'eliminazione di utenti e documenti viene gestita tramite logica nel backend: vengono rimossi in cascata tutti i documenti a lui associati, le relative analisi e i file corrispondenti archiviati sul bucket AWS S3.\\
+
+Le sezioni successive approfondiscono ciascuno di questi aspetti dal punto di vista teorico, analizzando le tecnologie disponibili, le motivazioni che hanno guidato le scelte progettuali e i fondamenti su cui si basano.
+
+\section{Parsing e normalizzazione documentale}
+I documenti sottoposti ad analisi possono presentarsi in vari formati: PDF, DOCX e Markdown, ciascuno con caratteristiche strutturali diverse. Per poter applicare in modo uniforme sia il livello rule-based che quello basato su LLM, è necessario tradurre qualsiasi formato di input in una rappresentazione comune prima di procedere con l'analisi.\\
+
+La scelta del formato comune è ricaduta su Markdown. A differenza del testo piano, il Markdown preserva la struttura semantica del documento: titoli e la loro gerarchia, elenchi, tabelle e il loro contenuto sono tutti elementi esplicitamente rappresentati nella sintassi. Questa ricchezza strutturale è rilevante non solo per il livello rule-based, che opera sulle sezioni del documento, ma anche per il livello LLM, che può sfruttare la struttura per comprendere meglio il contesto: una policy potrebbe ad esempio richiedere che determinati dati siano presentati in forma tabellare, verifica che sarebbe impossibile su una rappresentazione testuale priva di struttura.\\
+
+La gestione di parser diversi per formati diversi si presta naturalmente all'applicazione del pattern {\emph{\gls{strategy}}\glsfirstoccur}: definendo un'interfaccia comune con una singola firma, ogni parser può ricevere il contenuto grezzo del file in ingresso e restituire il Markdown risultante in modo intercambiabile, senza che il chiamante debba conoscere il formato specifico. Un ulteriore vantaggio di questo approccio è l'estensibilità: aggiungere il supporto a un nuovo formato richiede unicamente l'implementazione di un nuovo parser aderente all'interfaccia, senza modificare la logica esistente.\\
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.7\textwidth]{strategy}
+    \caption{Strategy patter}
+\end{figure}
+
+Le strategie di conversione differiscono significativamente a seconda del formato. Un file Markdown viene restituito direttamente senza alcuna trasformazione. Per i file DOCX, la conversione avviene in due fasi tramite le librerie {\emph{\gls{mammoth}}\glsfirstoccur} e {\emph{\gls{turndown}}\glsfirstoccur}: \gls{mammoth} converte il documento in HTML, formato che preserva la struttura semantica nativa del DOCX, dopodiché \gls{turndown} traduce l'HTML risultante in Markdown. Il caso più complesso è quello del PDF: a differenza del DOCX, un PDF non contiene struttura semantica recuperabile direttamente, ma è una sequenza di istruzioni grafiche che descrivono la posizione di ogni elemento sulla pagina. Estrarre il testo in modo grezzo produce un risultato spesso disordinato, con la struttura del documento perduta. Per questo motivo si è ricorso a {\emph{\gls{docling}}\glsfirstoccur}, un progetto open source sviluppato da IBM Research che affronta il problema trattando ogni pagina come un'immagine e applicando modelli di machine learning per riconoscerne la struttura visiva prima di estrarne il contenuto in Markdown. I dettagli dell'integrazione con Docling sono approfonditi nella sezione dedicata all'implementazione.
+
+\section{Gestione dell'identità e dei ruoli}
+Qualsiasi operazione esposta dalla piattaforma richiede che il chiamante sia identificato e autorizzato. Per gestire questi aspetti si è fatto ricorso a AWS {\emph{\gls{cognito}}\glsfirstoccur}, un servizio di identity management che si occupa della registrazione, dell'autenticazione e della gestione degli utenti, sollevando il backend da queste responsabilità.
+
+\subsection{JSON Web Token}
+Il meccanismo alla base dello scambio di identità tra client e server è il JSON Web Token ({\emph{\gls{jwt}}\glsfirstoccur}), uno standard che definisce un formato per la trasmissione sicura di informazioni tra due parti sotto forma di oggetto JSON. Un \gls{jwt} è composto da tre parti codificate in \emph{}{Base64} e separate da un punto:
+\begin{itemize}
+    \item Header: specifica il tipo di token e l'algoritmo di firma;
+    \item Payload: contiene le informazioni sull'utente;
+    \item Firma: garantisce l'integrità del token e ne permette la verifica senza dover contattare il server che lo ha emesso.
+\end{itemize}
+La firma è prodotta tramite un algoritmo asimmetrico RSA: il token viene firmato con la chiave privata del server di autenticazione e verificato dal backend tramite la corrispondente chiave pubblica.
+
+\subsection{Flusso di autenticazione con AWS Amplify}
+Sul frontend, la gestione dell'autenticazione è delegata ad AWS {\emph{\gls{amplify}}\glsfirstoccur}, una libreria che semplifica l'integrazione con i servizi di autenticazione di AWS. Quando l'utente inserisce le proprie credenziali, Amplify comunica con Cognito e, in caso di successo, riceve in risposta un insieme di token tra cui l'ID token: un \gls{jwt} che contiene le informazioni sull'identità dell'utente, come email e gruppi di appartenenza.\\
+
+L'ID token è un \gls{jwt} che contiene le informazioni sull'identità dell'utente, tra cui email e gruppi di appartenenza. Ad ogni richiesta \emph{HTTP} verso il backend, un {\emph{\gls{interceptor}}\glsfirstoccur} Axios (un meccanismo che intercetta ogni richiesta HTTP prima che venga inviata per modificarla automaticamente) recupera l'ID token dalla sessione corrente tramite e lo allega all'\emph{header} di ogni richiesta, rendendo il processo trasparente al resto dell'applicazione.
+
+\subsection{Verifica del token e autorizzazione nel backend}
+Il backend riceve il token e ne verifica l'autenticità tramite la libreria \emph{jwks-rsa}, che recupera le chiavi pubbliche di \gls{cognito} per controllare che il token sia stato effettivamente emesso da Cognito e non sia stato alterato. Questo approccio permette di eseguire la verifica localmente, senza dover contattare Cognito ad ogni richiesta. Una volta verificato, il token viene decodificato per leggere i gruppi di appartenenza  dell'utente.\\
+
+La gestione dei ruoli si basa sui \emph{Cognito Groups}: ogni utente appartiene di default al gruppo \emph{user}, mentre il gruppo \emph{admin} viene assegnato manualmente tramite la console di Cognito. Nel backend, \emph{NestJS} utilizza il meccanismo dei \emph{guard} per proteggere le operazioni: un guard verifica che l'utente sia autenticato prima di qualsiasi operazione, mentre un secondo guard controlla la presenza del gruppo \emph{admin} per le operazioni riservate, come la creazione e l'eliminazione degli utenti, bloccando la richiesta in caso contrario.
+
+% \section{Sistemi di validazione rule-based}
+% \section{Large Language Model per l'analisi semantica}
+% \subsection{Fondamenti dei Large Language Model}
+% \subsection{Approcci alternativi per l'analisi semantica di testi}
+% \subsection{Prompt engineering}
+% \subsection{Scelta del modello: Claude di Anthropic}
+% \section{Gestione della context window e chunking}
+% \section{Architettura web: backend e API REST}
+% \subsection{Pattern architetturali per applicazioni web}
+% \subsection{Scelta delle tecnologie}
+% \subsubsection{Node.js e NestJS}
+% \subsubsection{React}
+% \section{Persistenza dei dati: MongoDB}
+\section[Containerizzazione e deployment]{Containerizzazione e deployment: Docker e AWS}

@@ -8,6 +8,9 @@
 \newacronym[description={\glslink{ai}{Artificial Intelligence}}]
     {aig}{AIg}{Artificial Intelligence}
 
+\newacronym[description={\glslink{jwt}{JSON Web Token}}]
+    {jwtg}{JWTg}{JSON Web Token}
+
 % \newacronym[description={\glslink{umlg}{Unified Modeling Language}}]
 %     {uml}{UML}{Unified Modeling Language}
 
@@ -110,6 +113,74 @@
     text=Open Platform Organization,
     sort=openplatformorganization,
     description={\emph{Open Platform Organization} è un modello organizzativo che integra i principi del rendanheyi e dell'holacracy per creare un'organizzazione in cui la \emph{leadership} è diffusa, le decisioni sono distribuite e le diverse funzioni aziendali collaborano attorno a uno scopo comune.}
+}
+
+\newglossaryentry{multer} {
+    name=\glslink{multer}{Multer},
+    text=Multer,
+    sort=multer,
+    description={\emph{Multer} è un middleware per Node.js progettato per la gestione delle richieste HTTP di tipo \emph{multipart/form-data}, utilizzato principalmente per la ricezione di file caricati dal client. Espone il contenuto del file come buffer in memoria, rendendolo disponibile al livello applicativo senza richiedere la scrittura su disco.}
+}
+
+\newglossaryentry{mammoth} {
+    name=\glslink{mammoth}{Mammoth},
+    text=Mammoth,
+    sort=mammoth,
+    description={\emph{Mammoth} è una libreria per Node.js che converte documenti in formato DOCX in HTML, preservando la struttura semantica del documento originale come titoli, paragrafi, elenchi e tabelle.}
+}
+
+\newglossaryentry{turndown} {
+    name=\glslink{turndown}{Turndown},
+    text=Turndown,
+    sort=turndown,
+    description={\emph{Turndown} è una libreria per Node.js che converte HTML in Markdown. Supporta l'estensione tramite plugin, tra cui \emph{turndown-plugin-gfm} che aggiunge il supporto alla sintassi GitHub Flavored Markdown, necessaria per la corretta rappresentazione delle tabelle.}
+}
+
+\newglossaryentry{docling} {
+    name=\glslink{docling}{Docling},
+    text=Docling,
+    sort=docling,
+    description={\emph{Docling} è un progetto open source sviluppato da IBM Research per l'estrazione e la conversione di documenti PDF in formati strutturati come Markdown. A differenza degli estrattori di testo tradizionali, Docling tratta ogni pagina come un'immagine e applica modelli di machine learning per riconoscere la struttura visiva del documento prima di estrarne il contenuto, consentendo di preservare titoli, tabelle ed elenchi nel risultato finale. L'integrazione con backend non Python avviene tramite Docling Serve, un server REST che espone le funzionalità della libreria via HTTP.}
+}
+
+\newglossaryentry{strategy} {
+    name=\glslink{strategy}{Strategy},
+    text=Strategy,
+    sort=strategy,
+    description={\emph{Strategy} è un pattern di progettazione comportamentale che definisce una famiglia di algoritmi, li incapsula ciascuno in una classe separata e li rende intercambiabili attraverso un'interfaccia comune. Il chiamante non conosce la strategia concreta utilizzata, ma interagisce unicamente con l'interfaccia, delegando l'implementazione specifica alla strategia selezionata. Questo approccio favorisce l'estensibilità: aggiungere un nuovo algoritmo richiede unicamente la creazione di una nuova classe aderente all'interfaccia, senza modificare il codice esistente.}
+}
+
+\newglossaryentry{cognito} {
+    name=\glslink{cognito}{AWS Cognito},
+    text=AWS Cognito,
+    sort=cognito,
+    description={\emph{AWS Cognito} è un servizio di identity management fornito da Amazon Web Services che gestisce la registrazione, l'autenticazione e il controllo degli accessi degli utenti. Permette di definire gruppi di utenti a cui assegnare ruoli distinti e si integra con le applicazioni tramite standard aperti come OAuth 2.0 e OpenID Connect, emettendo token JWT alla conclusione del flusso di autenticazione.}
+}
+
+\newglossaryentry{jwt} {
+    name=\glslink{jwt}{JWT},
+    text=JWT,
+    sort=jwt,
+    description={\emph{JWT} (JSON Web Token) è uno standard aperto che definisce un formato compatto per la trasmissione sicura di informazioni tra due parti sotto forma di oggetto JSON. Un JWT è composto da tre parti codificate in Base64 e separate da un punto: l'header, che specifica il tipo di token e l'algoritmo di firma; il payload, che contiene le informazioni sull'utente dette \emph{claims}; e la firma, che garantisce l'integrità del token e ne permette la verifica tramite chiave pubblica senza dover contattare il server emittente.}
+}
+
+\newglossaryentry{amplify} {
+    name=\glslink{amplify}{AWS Amplify},
+    text=AWS Amplify,
+    sort=amplify,
+    description={\emph{AWS Amplify} è una libreria sviluppata da Amazon Web Services che astrae le chiamate dirette ai servizi AWS lato frontend. Nel contesto dell'autenticazione, si integra con AWS Cognito gestendo il flusso di login, la ricezione e il rinnovo dei token e l'accesso alla sessione corrente dell'utente tramite metodi come \texttt{fetchAuthSession}.}
+}
+
+\newglossaryentry{interceptor} {
+    name=\glslink{interceptor}{Interceptor},
+    text=Interceptor,
+    sort=interceptor,
+    description={\emph{Interceptor} è un meccanismo che permette di intercettare 
+    le richieste HTTP in uscita o le risposte in entrata prima che vengano 
+    elaborate dall'applicazione, consentendo di modificarle in modo centralizzato. 
+    Nel contesto di Axios, viene utilizzato per aggiungere automaticamente 
+    l'header di autenticazione a ogni richiesta senza dover ripetere la logica 
+    in ogni chiamata.}
 }
 
 % \newglossaryentry{umlg} {
