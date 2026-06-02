@@ -10,6 +10,18 @@
 
 \newacronym[description={\glslink{jwt}{JSON Web Token}}]
     {jwtg}{JWTg}{JSON Web Token}
+    
+\newacronym[description={\glslink{aws}{Amazon Web Services}}]
+    {awsg}{AWSg}{Amazon Web Services}
+
+\newacronym[description={\glslink{alb}{Application Load Balancer}}]
+    {albg}{ALBg}{Application Load Balancer}
+
+\newacronym[description={\glslink{ecs}{Elastic Container Service}}]
+    {ecsg}{ECSg}{Elastic Container Service}
+
+\newacronym[description={\glslink{ecr}{Elastic Container Registry}}]
+    {ecrg}{ECRg}{Elastic Container Registry}
 
 % \newacronym[description={\glslink{umlg}{Unified Modeling Language}}]
 %     {uml}{UML}{Unified Modeling Language}
@@ -164,13 +176,6 @@
     description={\emph{JWT} (JSON Web Token) è uno standard aperto che definisce un formato compatto per la trasmissione sicura di informazioni tra due parti sotto forma di oggetto JSON. Un JWT è composto da tre parti codificate in Base64 e separate da un punto: l'header, che specifica il tipo di token e l'algoritmo di firma; il payload, che contiene le informazioni sull'utente dette \emph{claims}; e la firma, che garantisce l'integrità del token e ne permette la verifica tramite chiave pubblica senza dover contattare il server emittente.}
 }
 
-\newglossaryentry{amplify} {
-    name=\glslink{amplify}{AWS Amplify},
-    text=AWS Amplify,
-    sort=amplify,
-    description={\emph{AWS Amplify} è una libreria sviluppata da Amazon Web Services che astrae le chiamate dirette ai servizi AWS lato frontend. Nel contesto dell'autenticazione, si integra con AWS Cognito gestendo il flusso di login, la ricezione e il rinnovo dei token e l'accesso alla sessione corrente dell'utente tramite metodi come \texttt{fetchAuthSession}.}
-}
-
 \newglossaryentry{interceptor} {
     name=\glslink{interceptor}{Interceptor},
     text=Interceptor,
@@ -181,6 +186,55 @@
     Nel contesto di Axios, viene utilizzato per aggiungere automaticamente 
     l'header di autenticazione a ogni richiesta senza dover ripetere la logica 
     in ogni chiamata.}
+}
+
+\newglossaryentry{aws} {
+    name=\glslink{aws}{AWS},
+    text=AWS,
+    sort=aws,
+    description={\emph{AWS} (Amazon Web Services) è la piattaforma di cloud computing di Amazon. Fornisce un insieme di servizi infrastrutturali accessibili via internet, tra cui capacità di calcolo, storage, database e strumenti di gestione delle identità, eliminando la necessità di possedere e mantenere hardware fisico.}
+}
+
+\newglossaryentry{alb} {
+    name=\glslink{alb}{ALB},
+    text=Application Load Balancer,
+    sort=alb,
+    description={\emph{ALB} (Application Load Balancer) è un servizio AWS che distribuisce il traffico in ingresso verso uno o più servizi di destinazione. Opera a livello applicativo e supporta il routing basato sul path della richiesta HTTP: è possibile definire regole che instradano le richieste verso destinazioni diverse in base all'URL, permettendo di esporre più servizi distinti tramite un unico punto di ingresso.}
+}
+
+\newglossaryentry{ecs} {
+    name=\glslink{ecs}{ECS},
+    text=ECS,
+    sort=ecs,
+    description={\emph{ECS} (Elastic Container Service) è il servizio AWS per l'esecuzione di container Docker. Permette di definire i container da eseguire tramite \emph{task definition}, che specificano l'immagine da utilizzare, le risorse assegnate e le variabili d'ambiente. ECS si occupa di avviare e mantenere i container in esecuzione, riavviandoli automaticamente in caso di failure.}
+}
+
+\newglossaryentry{ecr} {
+    name=\glslink{ecr}{ECR},
+    text=ECR,
+    sort=ecr,
+    description={\emph{ECR} (Elastic Container Registry) è il servizio AWS per l'archiviazione privata di immagini Docker. Funziona come un registry accessibile solo all'interno dell'account AWS, garantendo che le immagini dei container non siano pubblicamente raggiungibili. ECS preleva le immagini direttamente da ECR al momento dell'avvio dei container.}
+}
+
+\newglossaryentry{amplify} {
+    name=\glslink{amplify}{AWS Amplify},
+    text=AWS Amplify,
+    sort=amplify,
+    description={\emph{AWS Amplify} è un servizio AWS che semplifica il deploy e l'hosting di applicazioni frontend. Si collega a un repository Git, esegue automaticamente il build dell'applicazione ad ogni push sul branch configurato e distribuisce il risultato tramite una rete di distribuzione globale. Fornisce inoltre una libreria JavaScript che semplifica l'integrazione con altri servizi AWS, tra cui Cognito per la gestione dell'autenticazione.}
+}
+
+\newglossaryentry{deploy} {
+    name=\glslink{deploy}{deploy},
+    text=deploy,
+    sort=deploy,
+    description={\emph{Deploy} indica il processo di rilascio di una nuova versione di un'applicazione nell'ambiente di esecuzione. Nel contesto di una piattaforma cloud, comprende la costruzione dell'immagine Docker aggiornata, il suo caricamento sul registry e l'aggiornamento del servizio in esecuzione affinché utilizzi la nuova versione.}
+}
+
+\newglossaryentry{githubactions} {
+    name=\glslink{githubactions}{GitHub Actions},
+    text=GitHub Actions,
+    sort=githubactions,
+    description={\emph{GitHub Actions} è il sistema di automazione integrato in GitHub. Permette di definire \emph{workflow} — sequenze di operazioni automatiche descritte in file YAML — che vengono eseguiti al verificarsi di eventi sul repository, come un push o una pull request. È comunemente utilizzato per automatizzare il processo di build, esecuzione dei test e deploy dell'applicazione.}
 }
 
 % \newglossaryentry{umlg} {

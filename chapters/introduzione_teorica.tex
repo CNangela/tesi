@@ -28,6 +28,7 @@ La gestione di parser diversi per formati diversi si presta naturalmente all'app
 Le strategie di conversione differiscono significativamente a seconda del formato. Un file Markdown viene restituito direttamente senza alcuna trasformazione. Per i file DOCX, la conversione avviene in due fasi tramite le librerie {\emph{\gls{mammoth}}\glsfirstoccur} e {\emph{\gls{turndown}}\glsfirstoccur}: \gls{mammoth} converte il documento in HTML, formato che preserva la struttura semantica nativa del DOCX, dopodiché \gls{turndown} traduce l'HTML risultante in Markdown. Il caso più complesso è quello del PDF: a differenza del DOCX, un PDF non contiene struttura semantica recuperabile direttamente, ma è una sequenza di istruzioni grafiche che descrivono la posizione di ogni elemento sulla pagina. Estrarre il testo in modo grezzo produce un risultato spesso disordinato, con la struttura del documento perduta. Per questo motivo si è ricorso a {\emph{\gls{docling}}\glsfirstoccur}, un progetto open source sviluppato da IBM Research che affronta il problema trattando ogni pagina come un'immagine e applicando modelli di machine learning per riconoscerne la struttura visiva prima di estrarne il contenuto in Markdown. I dettagli dell'integrazione con Docling sono approfonditi nella sezione dedicata all'implementazione.
 
 \section{Gestione dell'identità e dei ruoli}
+\label{section:gestione_identita}
 Qualsiasi operazione esposta dalla piattaforma richiede che il chiamante sia identificato e autorizzato. Per gestire questi aspetti si è fatto ricorso a AWS {\emph{\gls{cognito}}\glsfirstoccur}, un servizio di identity management che si occupa della registrazione, dell'autenticazione e della gestione degli utenti, sollevando il backend da queste responsabilità.
 
 \subsection{JSON Web Token}
@@ -44,22 +45,79 @@ Sul frontend, la gestione dell'autenticazione è delegata ad AWS {\emph{\gls{amp
 
 L'ID token è un \gls{jwt} che contiene le informazioni sull'identità dell'utente, tra cui email e gruppi di appartenenza. Ad ogni richiesta \emph{HTTP} verso il backend, un {\emph{\gls{interceptor}}\glsfirstoccur} Axios (un meccanismo che intercetta ogni richiesta HTTP prima che venga inviata per modificarla automaticamente) recupera l'ID token dalla sessione corrente tramite e lo allega all'\emph{header} di ogni richiesta, rendendo il processo trasparente al resto dell'applicazione.
 
-\subsection{Verifica del token e autorizzazione nel backend}
+\subsection[Autenticazione nel backend]{Verifica del token e autorizzazione nel backend}
 Il backend riceve il token e ne verifica l'autenticità tramite la libreria \emph{jwks-rsa}, che recupera le chiavi pubbliche di \gls{cognito} per controllare che il token sia stato effettivamente emesso da Cognito e non sia stato alterato. Questo approccio permette di eseguire la verifica localmente, senza dover contattare Cognito ad ogni richiesta. Una volta verificato, il token viene decodificato per leggere i gruppi di appartenenza  dell'utente.\\
 
 La gestione dei ruoli si basa sui \emph{Cognito Groups}: ogni utente appartiene di default al gruppo \emph{user}, mentre il gruppo \emph{admin} viene assegnato manualmente tramite la console di Cognito. Nel backend, \emph{NestJS} utilizza il meccanismo dei \emph{guard} per proteggere le operazioni: un guard verifica che l'utente sia autenticato prima di qualsiasi operazione, mentre un secondo guard controlla la presenza del gruppo \emph{admin} per le operazioni riservate, come la creazione e l'eliminazione degli utenti, bloccando la richiesta in caso contrario.
 
-% \section{Sistemi di validazione rule-based}
-% \section{Large Language Model per l'analisi semantica}
-% \subsection{Fondamenti dei Large Language Model}
-% \subsection{Approcci alternativi per l'analisi semantica di testi}
-% \subsection{Prompt engineering}
+\section{Sistemi di validazione rule-based}
+I controlli strutturali del documento vengono eseguiti tramite rule-based, il cui punto centrale è il \emph{RuleRunner}. Il suo compito è eseguire un insieme di regole su tutte le sezioni del documento e restituire per ognuna un esito che indica se la sezione ha superato tutti i controlli o meno. La firma del metodo \texttt{run} accetta le sezioni del documento e un array di regole, restituendo un risultato per ogni combinazione sezione-regola. Il risultato finale per ogni sezione è positivo solo se tutte le regole sono state superate: basta una sola violazione per segnare la sezione come non conforme.\\
+
+Ogni regola implementa l'interfaccia \emph{Rule}, che espone un unico metodo \texttt{check} con una firma comune. Questo permette a \emph{RuleRunner} di eseguire qualsiasi regola senza conoscerne l'implementazione specifica: le regole attualmente previste sono \emph{MinLengthRule} e \emph{MaxLengthRule}, che verificano rispettivamente che il contenuto di una sezione superi un numero minimo di caratteri e non ecceda un numero massimo, entrambi configurabili tramite il ruleset selezionato e caricato sul databse. La scelta di definire un'interfaccia comune rende il sistema estensibile: aggiungere una nuova tipologia di controllo richiede unicamente di implementare l'interfaccia \emph{Rule} e aggiungerla all'array delle regole attive, senza modificare la logica esistente di \emph{RuleRunner}.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=1\textwidth]{rulerunner}
+    \caption{RuleRunner}
+\end{figure}
+
+\section{Large Language Model per l'analisi semantica}
+
+\subsection{Fondamenti dei Large Language Model}
+I Large Language Model sono modelli di linguaggio addestrati su enormi quantità di dati, il cui funzionamento si basa interamente su calcolo probabilistico. Durante l'addestramento il modello osserva miliardi di sequenze di testo e impara a stimare, dato un contesto, quale token è più probabile che segua. A \emph{runtime}, la risposta viene costruita in modo autoregressivo: il modello genera un token alla volta, aggiornando il contesto ad ogni passo e selezionando il token successivo in base alla probabilità calcolata. Non vi è alcuna comprensione del significato: il modello non sa di cosa si parla, ma produce sequenze statisticamente coerenti con i pattern osservati durante l'addestramento. Quello che li rende utili per compiti come il riconoscimento semantico e il rilevamento di incoerenze è che, avendo osservato una quantità sufficiente di testo, la coerenza statistica che producono approssima il risultato che si otterrebbe con una comprensione effettiva del contenuto.
+
+\subsection{Costruzione dinamica dell'agente}
+Un aspetto fondamentale per l'utilizzo pratico degli LLM è la definizione del comportamento che il modello deve adottare, operazione che avviene tramite il \emph{system prompt}: un insieme di istruzioni fornite al modello prima del contenuto da analizzare, che ne definiscono il ruolo, i vincoli da rispettare e il formato atteso in output. Modificando il system prompt è possibile ottenere comportamenti radicalmente diversi dallo stesso modello di base, senza intervenire sui pesi del modello stesso. Nel sistema sviluppato gli agenti non sono statici ma vengono costruiti dinamicamente a partire dal \emph{ruleset} associato al tipo di documento: il prompt, le policy e le sezioni obbligatorie vengono composti a runtime, producendo un agente specializzato per ogni analisi.
+
+\subsection{Ruleset}
+Per ogni tipologia di documento viene definito un ruleset, memorizzato su database, che contiene tutto il necessario per costruire l'agente dinamico. Esso include il prompt di sistema, le policy (regole in linguaggio naturale che integrano le istruzioni del prompt, come il vincolo che i titoli delle sezioni corrispondano semanticamente a quelli attesi dal template) e l'elenco delle sezioni obbligatorie. Affidare questo controllo all'LLM anziché a un approccio rule-based evita l'eccessiva rigidità di un confronto testuale: il modello è in grado di riconoscere che titoli come \textit{Obiettivi del meeting} e \textit{Scopo della riunione} si riferiscono alla stessa sezione, mentre una corrispondenza letterale li tratterebbe come distinti.
+
 % \subsection{Scelta del modello: Claude di Anthropic}
-% \section{Gestione della context window e chunking}
-% \section{Architettura web: backend e API REST}
-% \subsection{Pattern architetturali per applicazioni web}
-% \subsection{Scelta delle tecnologie}
-% \subsubsection{Node.js e NestJS}
-% \subsubsection{React}
-% \section{Persistenza dei dati: MongoDB}
-\section[Containerizzazione e deployment]{Containerizzazione e deployment: Docker e AWS}
+
+\subsection{Gestione della context window e chunking}
+I modelli LLM operano su una quantità limitata di testo elaborabile in una singola chiamata, detta \emph{context window}. Inviare l'intero documento in un'unica richiesta sarebbe tecnicamente praticabile, ma produrrebbe un'analisi meno precisa: con un contesto molto esteso, l'attenzione del modello si distribuisce su una quantità maggiore di contenuto e i dettagli nelle sezioni centrali tendono ad essere trattati con minore accuratezza. Per questo motivo si è scelto di suddividere il documento per sezioni e di inviare ciascuna in una chiamata separata, una strategia nota come \emph{chunking}. Questo approccio concentra l'analisi su un pezzo di contenuto alla volta, producendo un risultato più granulare, e permette di associare direttamente ogni anomalia rilevata alla sezione che la contiene, senza dover interpretare una risposta aggregata sull'intero documento.
+
+\subsection{Struttura del risultato}
+L'esito dell'analisi viene distribuito su due collezioni distinte. La prima, \textit{AiReport}, è collegata al report complessivo del documento e raccoglie le sezioni rilevate come mancanti. La seconda, \textit{AiSection}, contiene il dettaglio per ogni sezione che presenta almeno un'anomalia: le sezioni prive di errori non producono alcun record, mantenendo il risultato compatto. Per ogni sezione vengono registrati i problemi di policy, le incoerenze rilevate e una severità (\textit{Bassa}, \textit{Media} o \textit{Grave}), che verrà utilizzata per il calcolo dello score complessivo del documento analizzato.
+
+\subsection{Comunicazione con il modello: API REST}
+La comunicazione con il modello avviene tramite le API REST esposte da \emph{Anthropic}. Ogni richiesta viene inviata all'endpoint \texttt{/v1/messages} con il contenuto da analizzare e alcuni parametri rilevanti: il modello da utilizzare il numero massimo di token producibili in output e la \emph{temperature}.\\
+
+La temperature è un parametro che controlla il grado di casualità nella selezione dei token durante la generazione: valori elevati rendono il modello più creativo e variabile, valori bassi lo rendono più deterministico e conservativo. Poiché l'obiettivo è produrre \emph{JSON} strutturato e riproducibile, la temperature è impostata a zero, eliminando qualsiasi variabilità nella risposta.
+
+
+% TODO: da mettere nella parte pratica
+% \subsection{Robustezza e gestione degli errori}
+% Le chiamate al modello sono soggette a possibili failure dovuti a cause esterne: timeout di rete, errori temporanei lato server o superamento dei limiti di frequenza imposti dall'API (\emph{rate limiting}). Per gestire questi casi senza propagare immediatamente l'errore al chiamante, è stato implementato un meccanismo di \emph{retry} con \emph{exponential backoff}: in caso di fallimento, la richiesta viene ritentata fino a un massimo di tre volte, con un intervallo tra i tentativi che raddoppia ad ogni iterazione. Non tutti gli errori giustificano un nuovo tentativo: gli errori di autenticazione o le richieste malformate vengono propagati immediatamente, mentre i timeout, gli errori del server e il rate limiting rientrano tra i casi recuperabili. Ogni chiamata è inoltre soggetta a un timeout complessivo, trascorso il quale la richiesta viene interrotta per evitare attese indefinite.
+
+\section{Stack tecnologico}
+Lo stack tecnologico adottato non è stato scelto valutando alternative: l'azienda disponeva di un boilerplate già configurato con questo stack tecnologico e il suo utilizzo era consolidato internamente, garantendo la disponibilità di supporto da parte dei colleghi.
+\subsection{Node.js e NestJS}
+Il backend è sviluppato con \emph{NestJS}, un framework costruito sopra \emph{Node.js}. 
+
+\emph{Node.js} è un runtime \emph{JavaScript} che permette di eseguire \emph{JavaScript} lato server, al di fuori del browser. Il suo modello di esecuzione è asincrono: anziché attendere il completamento di un'operazione prima di passare alla successiva, \emph{Node.js} avvia l'operazione e continua a gestire altre richieste, tornando sul risultato non appena è disponibile. Questo lo rende adatto a un backend come quello sviluppato, che gestisce molte operazioni concorrenti: chiamate verso il database, upload e download da S3 e richieste alle API esterne di \emph{Anthropic}. (\cite{site:nodejs}).\\
+
+ \emph{NestJS} fornisce un'architettura predefinita che consente di costruire applicazioni testabili, scalabili, debolmente accoppiate e facilmente manutenibili. L'architettura si articola in: moduli che raggruppano funzionalità correlate, controller che gestiscono le richieste HTTP in ingresso e provider che contengono la logica applicativa, iniettabili tramite dependency injection. Meccanismi come i guard, già descritti nella sezione sulla sezione riguardante la \hyperref[section:gestione_identita]{gestione dell'identità}, si inseriscono in questa struttura come componenti trasversali che intercettano le richieste prima che raggiungano il controller. (\cite{site:nestjs}).\\
+
+\subsection{React}
+Il frontend è sviluppato con \emph{React}, una libreria \emph{JavaScript} per la costruzione di interfacce utente. React adotta un modello basato su componenti: ogni elemento dell'interfaccia è un componente autonomo che gestisce il proprio stato e può essere composto con altri componenti per costruire interfacce più complesse. Questo approccio favorisce il riutilizzo del codice e rende più semplice ragionare su ogni parte dell'interfaccia singolarmente.
+
+\subsection{Persistenza dei dati: MongoDB}
+Il database utilizzato è \emph{MongoDB}, un database non relazionale orientato ai documenti, in cui i dati vengono archiviati in formato \emph{BSON} (una rappresentazione binaria di JSON). Su MongoDB vengono persistiti tutti i dati applicativi: quelli relativi agli utenti, ai ruleset e all'intero storico delle analisi prodotte dalla piattaforma. La comunicazione con il database avviene tramite \emph{Mongoose}, un ODM (Object Document Mapper) che permette di definire la struttura dei documenti tramite schema.
+
+\section{Infrastruttura cloud}
+L'infrastruttura è interamente ospitata su {\emph{\gls{aws}}\glsfirstoccur}. Il punto di ingresso per il traffico esterno è un {\emph{\gls{alb}}\glsfirstoccur} esposto su HTTPS, configurato con una regola di routing che inoltra le richieste dirette a \texttt{/api/main-app/*} al backend tramite un \emph{target group}, ovvero un raggruppamento dei container {\emph{\gls{ecs}}\glsfirstoccur} destinatari del traffico, identificati per indirizzo IP e porta. Questo livello di indirezione permette inoltre di distribuire il carico su più istanze del container, aggiungendone di nuovi in caso di necessità.\\
+
+Il backend e Docling girano come container separati su \gls{ecs}, prelevando le rispettive immagini da un registry {\emph{\gls{ecr}}\glsfirstoccur}. Docling non è sviluppato internamente: è un container basato sulla libreria open source omonima di \emph{IBM Research}, usato così com'è per delegare al backend il parsing dei PDF in Markdown via HTTP, senza esporlo all'esterno. Le variabili d'ambiente del backend vengono iniettate al momento dell'avvio dal file \texttt{shared.env} archiviato su un bucket S3 dedicato.
+
+I documenti caricati dagli utenti vengono invece salvati su un bucket S3 separato, di cui il backend gestisce upload e accesso tramite URL.\\
+
+Il frontend è servito tramite {\emph{\gls{amplify}}\glsfirstoccur}, che ricostruisce e pubblica l'applicazione ad ogni push sul branch configurato. L'autenticazione avviene direttamente tra frontend e \gls{cognito} tramite la libreria \gls{amplify}, senza coinvolgere il backend, che si limita a verificare il token \gls{jwt} ricevuto ad ogni richiesta.\\
+
+Il {\emph{\gls{deploy}}\glsfirstoccur} dell'intera piattaforma è automatizzato tramite {\emph{\gls{githubactions}}\glsfirstoccur}. Per consentire alla pipeline di operare su \gls{aws} senza memorizzare credenziali statiche, si è fatto ricorso alla federazione di identità: invece di generare una chiave di accesso permanente e archiviarla su GitHub, \gls{aws} riconosce GitHub come identity provider fidato. Quando la pipeline viene eseguita, GitHub emette un token firmato che certifica l'identità del repository; \gls{aws} verifica questo token e, se il repository corrisponde a quello autorizzato, restituisce credenziali temporanee valide solo per la durata del workflow. Con questo approccio si evita l'utilizzo di chiavi da ruotare o proteggere.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=1\textwidth]{infra.drawio}
+    \caption{Infrastruttura AWS}
+\end{figure}
