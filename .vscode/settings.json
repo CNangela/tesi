@@ -19,6 +19,7 @@
         "*.bib"
     ],
     "cSpell.words": [
+        "autocompletamento",
         "Axios",
         "containerizzato",
         "Containerizzazione",
@@ -28,7 +29,9 @@
         "elaborabile",
         "manutenibili",
         "Massaro",
+        "microservizi",
         "Multer",
+        "Rulebase",
         "versionabile",
         "versionamento",
         "versionato"

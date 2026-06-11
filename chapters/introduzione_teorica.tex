@@ -14,23 +14,72 @@ Le sezioni successive approfondiscono ciascuno di questi aspetti dal punto di vi
 
 \section{Stack tecnologico}
 Lo stack tecnologico adottato non è stato scelto valutando alternative: l'azienda disponeva di un boilerplate già configurato con questo stack tecnologico e il suo utilizzo era consolidato internamente, garantendo la disponibilità di supporto da parte dei colleghi.
+
 \subsection{Node.js e NestJS}
-Il backend è sviluppato con \emph{NestJS}, un framework costruito sopra \emph{Node.js}. 
+Il backend è sviluppato con \emph{NestJS}, un framework costruito sopra \emph{Node.js} che adotta \emph{TypeScript} come linguaggio predefinito. \emph{TypeScript} è un linguaggio fortemente tipizzato che si costruisce su \emph{JavaScript}, aggiungendo un sistema di tipi che permette di rilevare comportamenti inattesi nel codice riducendo la probabilità di bug (\cite{site:typescript}). Ogni codice \emph{JavaScript} valido è anche codice \emph{TypeScript} valido, ma non viceversa: \emph{TypeScript} introduce annotazioni di tipo verificate a compile-time e poi eliminate durante la compilazione in \emph{JavaScript} puro. La tabella \ref{tab:js-vs-ts} riassume le principali differenze tra i due linguaggi.\\
 
-\emph{Node.js} è un runtime \emph{JavaScript} che permette di eseguire \emph{JavaScript} lato server, al di fuori del browser. Il suo modello di esecuzione è asincrono: anziché attendere il completamento di un'operazione prima di passare alla successiva, \emph{Node.js} avvia l'operazione e continua a gestire altre richieste, tornando sul risultato non appena è disponibile. Questo lo rende adatto a un backend come quello sviluppato, che gestisce molte operazioni concorrenti: chiamate verso il database, upload e download da S3 e richieste alle API esterne di \emph{Anthropic}. (\cite{site:nodejs}).\\
+\emph{Node.js} è un runtime \emph{JavaScript} che permette di eseguire codice lato server, al di fuori del browser. Il suo modello di esecuzione è asincrono: anziché attendere il completamento di un'operazione prima di passare alla successiva, avvia l'operazione e continua a gestire altre richieste, tornando sul risultato non appena è disponibile. Questo lo rende adatto a un backend come quello sviluppato, che gestisce molte operazioni concorrenti: chiamate verso il database, upload e download da S3 e richieste alle API esterne di \emph{Anthropic} (\cite{site:nodejs}).\\
 
- \emph{NestJS} fornisce un'architettura predefinita che consente di costruire applicazioni testabili, scalabili, debolmente accoppiate e facilmente manutenibili. L'architettura si articola in: moduli che raggruppano funzionalità correlate, controller che gestiscono le richieste HTTP in ingresso e provider che contengono la logica applicativa, iniettabili tramite dependency injection. Meccanismi come i guard, che verranno approfonditi nella sezione relativa alla \hyperref[section:gestione_identita]{gestione dell'identità}, si inseriscono in questa struttura come componenti trasversali che intercettano le richieste prima che raggiungano il controller. (\cite{site:nestjs}).\\
+\emph{NestJS} fornisce un'architettura predefinita che consente di costruire applicazioni testabili, scalabili, debolmente accoppiate e facilmente manutenibili. L'architettura si articola in: moduli che raggruppano funzionalità correlate, controller che gestiscono le richieste HTTP in ingresso e provider che contengono la logica applicativa, iniettabili tramite dependency injection. Meccanismi come i guard, che verranno approfonditi nella sezione relativa alla \hyperref[section:gestione_identita]{gestione dell'identità}, si inseriscono in questa struttura come componenti trasversali che intercettano le richieste prima che raggiungano il controller (\cite{site:nestjs}).
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|L{4cm}|L{4cm}|L{4cm}|}
+\hline
+\rowcolor{headergreen}
+\thead{Caratteristica} & \thead{JavaScript} & \thead{TypeScript} \\
+\hline
+Tipizzazione & Dinamica (runtime) & Statica (compile-time) \\
+\hline
+Rilevamento errori & A runtime & A compile-time \\
+\hline
+Compilazione & Non necessaria & Necessaria (tsc) \\
+\hline
+Compatibilità & Eseguito direttamente & Compilato in JavaScript \\
+\hline
+Supporto IDE & Limitato & Avanzato (autocompletamento,  refactoring) \\
+\hline
+Scalabilità & Dipende dalla disciplina del team & Facilitata da interfacce, enum e tipi statici \\
+\hline
+\end{tabular}
+\caption{Confronto tra JavaScript e TypeScript}
+\label{tab:js-vs-ts}
+\end{table}
 
 \subsection{React}
-Il frontend è sviluppato con \emph{React}, una libreria \emph{JavaScript} per la costruzione di interfacce utente. React adotta un modello basato su componenti: ogni elemento dell'interfaccia è un componente autonomo che gestisce il proprio stato e può essere composto con altri componenti per costruire interfacce più complesse. Questo approccio favorisce il riutilizzo del codice e rende più semplice ragionare su ogni parte dell'interfaccia singolarmente.
+Il frontend è sviluppato con \emph{React}, una libreria \emph{JavaScript} per la costruzione di interfacce utente. React adotta un modello basato su componenti: ogni elemento dell'interfaccia è un componente autonomo che gestisce il proprio stato e può essere composto con altri componenti per costruire interfacce più complesse. Questo approccio favorisce il riutilizzo del codice e rende più semplice ragionare su ogni parte dell'interfaccia singolarmente. (\cite{site:react}).
 
 \subsection{Persistenza dei dati: MongoDB}
-Il database utilizzato è \emph{MongoDB}, un database non relazionale orientato ai documenti, in cui i dati vengono archiviati in formato \emph{BSON} (una rappresentazione binaria di JSON). Su MongoDB vengono persistiti tutti i dati applicativi: quelli relativi agli utenti, ai ruleset e all'intero storico delle analisi prodotte dalla piattaforma. La comunicazione con il database avviene tramite \emph{Mongoose}, un ODM (Object Document Mapper) che permette di definire la struttura dei documenti tramite schema.
+Il database utilizzato è \emph{MongoDB}, un database non relazionale orientato ai documenti, in cui i dati vengono archiviati in formato \emph{BSON} (una rappresentazione binaria di JSON). Su MongoDB vengono persistiti tutti i dati applicativi: quelli relativi agli utenti, ai ruleset e all'intero storico delle analisi prodotte dalla piattaforma. La comunicazione con il database avviene tramite \emph{Mongoose}, un ODM (Object Document Mapper) che permette di definire la struttura dei documenti tramite schema. (\cite{site:mongoDB}).
+
+\subsection{Nx}
+\emph{Nx} è uno strumento di build e orchestrazione per monorepo che ottimizza i processi di test e build tramite un sistema di cache: quando una parte del progetto non è cambiata rispetto all'esecuzione precedente, \emph{Nx} riutilizza i risultati già calcolati invece di rieseguire i task da zero, riducendo significativamente i tempi. Nel progetto viene utilizzato per eseguire i test e per la build delle immagini \emph{Docker}. \emph{Nx} offre inoltre una visualizzazione grafica del grafo delle dipendenze tra i progetti del monorepo, rendendo immediatamente comprensibile come i moduli si relazionano tra loro. (\cite{site:nx}).
+
+\section{Architettura di deployment}
+Nelle fasi di progettazione si è optato per un'architettura monolitica, poiché nel contesto di un progetto di dimensioni contenute, che interagisce con un modello di intelligenza artificiale tramite API esterne creando gli agenti all'occorrenza, adottare un'architettura a microservizi avrebbe costituito un caso di over-engineering. In questo modello, l'intera applicazione viene sviluppata e distribuita come un unico artefatto eseguibile che racchiude tutti i componenti e le funzionalità necessarie. L'approccio monolitico semplifica lo sviluppo iniziale e la fase di rilascio, risultando ideale per team di dimensioni ridotte e per l'avvio rapido di nuovi applicativi, rimandando l'eventuale scomposizione in microservizi a fasi successive, qualora i domini crescano o presentino carichi differenti.
+
+\section{Architettura logica}
+La scelta dell'architettura logica è ricaduta su una \emph{Layered Architecture} (riportata nella figura \ref{fig:architetturaLogica}). Questa architettura prevede la scomposizione gerarchica in quattro strati, separati in modo netto:
+\begin{itemize}
+    \item \textbf{Presentation Layer}: gestisce l'interfaccia utente e la comunicazione con il browser. In questo progetto corrisponde al frontend sviluppato in React.
+    \item \textbf{Application Layer}: riceve le richieste HTTP in ingresso ed effettua le validazioni sintattiche, garantendo che i dati siano formalmente corretti prima di essere processati. Corrisponde ai controller di NestJS.
+    \item \textbf{Business Layer}: contiene le regole del dominio e la logica applicativa. È lo strato più complesso e deve essere isolato da quelli esterni; in questo progetto include le chiamate alle API di \emph{Anthropic} e di {\emph{\gls{docling}}\glsfirstoccur}. Corrisponde ai service di NestJS.
+    \item \textbf{Persistence Layer}: si occupa dell'interazione con il database, gestendo il salvataggio, il recupero e l'aggiornamento dei dati. Corrisponde agli schema Mongoose e a \emph{MongoDB Atlas}.
+\end{itemize}
+
+La dipendenza scorre in una sola direzione: il Presentation Layer comunica con l'Application Layer, che a sua volta si appoggia al Business Layer, il quale infine interagisce con il Persistence Layer. Nessuno strato conosce i dettagli implementativi di quelli non adiacenti, il che rende più semplice modificare o sostituire una parte del sistema senza impattare le altre.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=1\textwidth]{architetturaLogica.png}
+    \caption{Architettura Logica}
+    \label{fig:architetturaLogica}
+\end{figure}
 
 \section{Infrastruttura cloud}
-L'infrastruttura è interamente ospitata su {\emph{\gls{aws}}\glsfirstoccur}. Il punto di ingresso per il traffico esterno è un {\emph{\gls{alb}}\glsfirstoccur} esposto su HTTPS, configurato con una regola di routing che inoltra le richieste dirette a \texttt{/api/main-app/*} al backend tramite un \emph{target group}, ovvero un raggruppamento dei container {\emph{\gls{ecs}}\glsfirstoccur} destinatari del traffico, identificati per indirizzo IP e porta. Il \gls{alb} permette inoltre di distribuire il carico su più istanze del container, aggiungendone di nuovi in caso di necessità.\\
+L'infrastruttura è interamente ospitata su {\emph{\gls{aws}}\glsfirstoccur} ed è rappresentata nella figura \ref{fig:infrastruttura}. Il punto di ingresso per il traffico esterno è un {\emph{\gls{alb}}\glsfirstoccur} esposto su HTTPS, configurato con una regola di routing che inoltra le richieste dirette a \texttt{/api/main-app/*} al backend tramite un \emph{target group}, ovvero un raggruppamento dei container {\emph{\gls{ecs}}\glsfirstoccur} destinatari del traffico, identificati per indirizzo IP e porta. Il \gls{alb} permette inoltre di distribuire il carico su più istanze del container, aggiungendone di nuovi in caso di necessità.\\
 
-Il backend e Docling girano come container separati su \gls{ecs}, prelevando le rispettive immagini da un registry {\emph{\gls{ecr}}\glsfirstoccur}. Docling non è sviluppato internamente: è un container basato sulla libreria open source omonima di \emph{IBM Research}, usato così com'è per delegare al backend il parsing dei PDF in Markdown via HTTP, senza esporlo all'esterno. Le variabili d'ambiente del backend vengono iniettate al momento dell'avvio dal file \texttt{shared.env} archiviato su un bucket S3 dedicato.
+Il backend e \gls{docling} girano come container separati su \gls{ecs}, prelevando le rispettive immagini da un registry {\emph{\gls{ecr}}\glsfirstoccur}. \gls{docling} non è sviluppato internamente: è un container basato sulla libreria open source omonima di \emph{IBM Research}, usato così com'è per delegare al backend il parsing dei PDF in Markdown via HTTP, senza esporlo all'esterno. Le variabili d'ambiente del backend vengono iniettate al momento dell'avvio dal file \texttt{shared.env} archiviato su un bucket S3 dedicato.
 
 I documenti caricati dagli utenti vengono invece salvati su un bucket S3 separato, di cui il backend gestisce upload e accesso tramite URL.\\
 
@@ -42,6 +91,7 @@ Il {\emph{\gls{deploy}}\glsfirstoccur} dell'intera piattaforma è automatizzato 
     \centering
     \includegraphics[width=1\textwidth]{infra.drawio}
     \caption{Infrastruttura AWS}
+    \label{fig:infrastruttura}
 \end{figure}
 
 \section{Gestione dell'identità}
@@ -72,20 +122,21 @@ I documenti sottoposti ad analisi possono presentarsi in vari formati: PDF, DOCX
 
 La scelta del formato comune è ricaduta su Markdown. A differenza del testo piano, il Markdown preserva la struttura semantica del documento: titoli e la loro gerarchia, elenchi, tabelle e il loro contenuto sono tutti elementi esplicitamente rappresentati nella sintassi. Questa ricchezza strutturale è rilevante non solo per il livello rule-based, che opera sulle sezioni del documento, ma anche per il livello LLM, che può sfruttare la struttura per comprendere meglio il contesto: una policy potrebbe ad esempio richiedere che determinati dati siano presentati in forma tabellare, verifica che sarebbe impossibile su una rappresentazione testuale priva di struttura.\\
 
-La gestione di parser diversi per formati diversi si presta naturalmente all'applicazione del pattern {\emph{\gls{strategy}}\glsfirstoccur}: definendo un'interfaccia comune con una singola firma, ogni parser può ricevere il contenuto grezzo del file in ingresso e restituire il Markdown risultante in modo intercambiabile, senza che il chiamante debba conoscere il formato specifico. Un ulteriore vantaggio di questo approccio è l'estensibilità: aggiungere il supporto a un nuovo formato richiede unicamente l'implementazione di un nuovo parser aderente all'interfaccia, senza modificare la logica esistente.\\
+La gestione di parser diversi per formati diversi si presta naturalmente all'applicazione del pattern {\emph{\gls{strategy}}\glsfirstoccur}, riportato nella figura \ref{fig:strategy}: definendo un'interfaccia comune con una singola firma, ogni parser può ricevere il contenuto grezzo del file in ingresso e restituire il Markdown risultante in modo intercambiabile, senza che il chiamante debba conoscere il formato specifico. Un ulteriore vantaggio di questo approccio è l'estensibilità: aggiungere il supporto a un nuovo formato richiede unicamente l'implementazione di un nuovo parser aderente all'interfaccia, senza modificare la logica esistente.\\
 
 \begin{figure}[h]
     \centering
     \includegraphics[width=0.7\textwidth]{strategy}
     \caption{Strategy pattern}
+    \label{fig:strategy}
 \end{figure}
 
-Le strategie di conversione differiscono significativamente a seconda del formato. Un file Markdown viene restituito direttamente senza alcuna trasformazione. Per i file DOCX, la conversione avviene in due fasi tramite le librerie {\emph{\gls{mammoth}}\glsfirstoccur} e {\emph{\gls{turndown}}\glsfirstoccur}: \gls{mammoth} converte il documento in HTML, formato che preserva la struttura semantica nativa del DOCX, dopodiché \gls{turndown} traduce l'HTML risultante in Markdown. Il caso più complesso è quello del PDF: a differenza del DOCX, un PDF non contiene struttura semantica recuperabile direttamente, ma è una sequenza di istruzioni grafiche che descrivono la posizione di ogni elemento sulla pagina. Estrarre il testo in modo grezzo produce un risultato spesso disordinato, con la struttura del documento perduta. Per questo motivo si è ricorso a {\emph{\gls{docling}}\glsfirstoccur}, un progetto open source sviluppato da IBM Research che affronta il problema trattando ogni pagina come un'immagine e applicando modelli di machine learning per riconoscerne la struttura visiva prima di estrarne il contenuto in Markdown. I dettagli dell'integrazione con docling sono approfonditi nella sezione dedicata all'implementazione.
+Le strategie di conversione differiscono significativamente a seconda del formato. Un file Markdown viene restituito direttamente senza alcuna trasformazione. Per i file DOCX, la conversione avviene in due fasi tramite le librerie {\emph{\gls{mammoth}}\glsfirstoccur} e {\emph{\gls{turndown}}\glsfirstoccur}: \gls{mammoth} converte il documento in HTML, formato che preserva la struttura semantica nativa del DOCX, dopodiché \gls{turndown} traduce l'HTML risultante in Markdown. Il caso più complesso è quello del PDF: a differenza del DOCX, un PDF non contiene struttura semantica recuperabile direttamente, ma è una sequenza di istruzioni grafiche che descrivono la posizione di ogni elemento sulla pagina. Estrarre il testo in modo grezzo produce un risultato spesso disordinato, con la struttura del documento perduta. Per questo motivo si è ricorso a \gls{docling}, un progetto open source sviluppato da IBM Research che affronta il problema trattando ogni pagina come un'immagine e applicando modelli di machine learning per riconoscerne la struttura visiva prima di estrarne il contenuto in Markdown. I dettagli dell'integrazione con \gls{docling} sono approfonditi nella sezione dedicata all'implementazione.
 
 \section[Analisi semantica]{Analisi semantica}
 
 \subsection{Sistemi di validazione rule-based}
-I controlli strutturali del documento vengono eseguiti tramite rule-based, il cui punto centrale è il \emph{RuleRunner}. Il suo compito è eseguire un insieme di regole su tutte le sezioni del documento e restituire per ognuna un esito che indica se la sezione ha superato tutti i controlli o meno. La firma del metodo \texttt{run} accetta le sezioni del documento e un array di regole, restituendo un risultato per ogni combinazione sezione-regola. Il risultato finale per ogni sezione è positivo solo se tutte le regole sono state superate: basta una sola violazione per segnare la sezione come non conforme.\\
+I controlli strutturali del documento vengono eseguiti tramite rule-based, il cui punto centrale è il \emph{RuleRunner}, riportato in figura \ref{fig:rule-runner}. Il suo compito è eseguire un insieme di regole su tutte le sezioni del documento e restituire per ognuna un esito che indica se la sezione ha superato tutti i controlli o meno. La firma del metodo \texttt{run} accetta le sezioni del documento e un array di regole, restituendo un risultato per ogni combinazione sezione-regola. Il risultato finale per ogni sezione è positivo solo se tutte le regole sono state superate: basta una sola violazione per segnare la sezione come non conforme.\\
 
 Ogni regola implementa l'interfaccia \emph{Rule}, che espone un unico metodo \texttt{check} con una firma comune. Questo permette a \emph{RuleRunner} di eseguire qualsiasi regola senza conoscerne l'implementazione specifica: le regole attualmente previste sono \emph{MinLengthRule} e \emph{MaxLengthRule}, che verificano rispettivamente che il contenuto di una sezione superi un numero minimo di caratteri e non ecceda un numero massimo, entrambi configurabili tramite il ruleset selezionato e caricato sul database. La scelta di definire un'interfaccia comune rende il sistema estensibile: aggiungere una nuova tipologia di controllo richiede unicamente di implementare l'interfaccia \emph{Rule} e aggiungerla all'array delle regole attive, senza modificare la logica esistente di \emph{RuleRunner}.
 
@@ -93,10 +144,24 @@ Ogni regola implementa l'interfaccia \emph{Rule}, che espone un unico metodo \te
     \centering
     \includegraphics[width=1\textwidth]{rulerunner}
     \caption{RuleRunner}
+    \label{fig:rule-runner}
 \end{figure}
 
 \subsubsection{Struttura del risultato}
-Ogni sezione analizzata produce un record nella collezione dedicata, vincolato al report complessivo tramite un riferimento identificativo (\textit{analysisReportId}). Oltre al titolo della sezione (\textit{sectionTitle}), viene memorizzato un flag booleano (\textit{passed}) che indica se il contenuto ha rispettato i limiti del \emph{ruleset} di riferimento, permettendo di identificare immediatamente le sezioni che hanno violato le regole dimensionali.
+\begin{figure}[h]
+    \centering
+    \begin{minipage}{0.55\textwidth}
+        \vspace{-1cm}
+        Ogni sezione analizzata produce un record nella collezione dedicata (riportata nella figura \ref{fig:rulebaseSection}), vincolato al report complessivo tramite un riferimento identificativo (\textit{analysisReportId}). Oltre al titolo della sezione (\textit{sectionTitle}), viene memorizzato un flag booleano (\textit{passed}) che indica se il contenuto ha rispettato i limiti del \emph{ruleset} di riferimento, permettendo di identificare immediatamente le sezioni che hanno violato le regole dimensionali.
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.4\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{schemas/rulebaseSection}
+        \captionof{figure}{Collection \\RulebaseSection}
+        \label{fig:rulebaseSection}
+    \end{minipage}
+\end{figure}
 
 \subsection{Integrazione Large Language Model}
 I Large Language Model sono modelli di linguaggio addestrati su enormi quantità di dati, il cui funzionamento si basa interamente su calcolo probabilistico. Durante l'addestramento il modello osserva miliardi di sequenze di testo e impara a stimare, dato un contesto, quale token è più probabile che segua. A \emph{runtime}, la risposta viene costruita in modo auto regressivo: il modello genera un token alla volta, aggiornando il contesto ad ogni passo e selezionando il token successivo in base alla probabilità calcolata. Non vi è alcuna comprensione del significato: il modello non sa di cosa si parla, ma produce sequenze statisticamente coerenti con i pattern osservati durante l'addestramento. Quello che li rende utili per compiti come il riconoscimento semantico e il rilevamento di incoerenze è che, avendo osservato una quantità sufficiente di testo, la coerenza statistica che producono approssima il risultato che si otterrebbe con una comprensione effettiva del contenuto.
@@ -108,7 +173,21 @@ I modelli LLM operano su una quantità limitata di testo elaborabile in una sing
 Un aspetto fondamentale per l'utilizzo pratico degli LLM è la definizione del comportamento che il modello deve adottare, operazione che avviene tramite il \emph{system prompt}: un insieme di istruzioni fornite al modello prima del contenuto da analizzare, che ne definiscono il ruolo, i vincoli da rispettare e il formato atteso in output. Modificando il system prompt è possibile ottenere comportamenti radicalmente diversi dallo stesso modello di base, senza intervenire sui pesi del modello stesso. Nel sistema sviluppato gli agenti non sono statici ma vengono costruiti dinamicamente a partire dal \emph{ruleset} associato al tipo di documento: il prompt, le policy e le sezioni obbligatorie vengono composti a runtime, producendo un agente specializzato per ogni analisi.
 
 \subsubsection{Ruleset}
-Per ogni tipologia di documento viene definito un ruleset, memorizzato su database, che contiene tutto il necessario per costruire l'agente dinamico. Esso include il prompt di sistema, le policy (regole in linguaggio naturale che integrano le istruzioni del prompt, come il vincolo che i titoli delle sezioni corrispondano semanticamente a quelli attesi dal template) e l'elenco delle sezioni obbligatorie. Affidare questo controllo all'LLM anziché a un approccio rule-based evita l'eccessiva rigidità di un confronto testuale: il modello è in grado di riconoscere che titoli come \textit{Obiettivi del meeting} e \textit{Scopo della riunione} si riferiscono alla stessa sezione, mentre una corrispondenza letterale li tratterebbe come distinti.
+\begin{figure}[h]
+    \centering
+    \begin{minipage}{0.65\textwidth}
+        \vspace{-1cm}
+        Per ogni tipologia di documento viene definito un ruleset, memorizzato su database (figura \ref{fig:policyRuleset}), che contiene tutto il necessario per costruire l'agente dinamico. Esso include il prompt di sistema, le policy (regole in linguaggio naturale che integrano le istruzioni del prompt, come il vincolo che i titoli delle sezioni corrispondano semanticamente a quelli attesi dal template) e l'elenco delle sezioni obbligatorie. Affidare questo controllo all'LLM anziché a un approccio rule-based evita l'eccessiva rigidità di un confronto testuale: il modello è in grado di riconoscere che titoli come \textit{Obiettivi del meeting} e \textit{Scopo della riunione} si riferiscono alla stessa sezione, mentre una corrispondenza letterale li tratterebbe come distinti.
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{schemas/policyRuleset}
+        \captionof{figure}{Collection \\PolicyRuleset}
+        \label{fig:policyRuleset}
+    \end{minipage}
+\end{figure}
+
 
 \subsubsection[Scelta del modello]{Scelta del modello: Claude di Anthropic}
 
@@ -137,35 +216,35 @@ Per ciascun test sono stati valutati la validità del \emph{JSON} prodotto, il r
 \endfirsthead
 \hline
 \rowcolor{headergreen}
-\thead{Modello} & \thead{Test} & \thead{JSON valido} & \thead{Regole} & \thead{All.} & \thead{Cons.} & \thead{Comp.} & \thead{Tempo (ms)} \\
+\thead{Modello} & \thead{Test} & \thead{JSON valido} & \thead{Regole} & \thead{All.} & \thead{Cons.} & \thead{Comp.} & \thead{Tempo (s)} \\
 \endhead
 \endfoot
 
 \hline
 \rowcolor{tablerowwhite} \multicolumn{8}{|c|}{\textbf{Sonnet}} \\ \hline
-Sonnet & T1  & Sì & Sì & No & Buono & Buono & 5.139 \\ \hline
-Sonnet & T2  & Sì & Sì & No & Buono & Buono & 3.049 \\ \hline
-Sonnet & T3  & Sì & Sì & No & Buono & Buono & 4.283 \\ \hline
-Sonnet & T4  & Sì & Sì & No & Buono & Buono & 16.927 \\ \hline
-Sonnet & T5  & Sì & Sì & No & Buono & Buono & 9.182 \\ \hline
+Sonnet & T1  & Sì & Sì & No & Buono & Buono & 5,139 \\ \hline
+Sonnet & T2  & Sì & Sì & No & Buono & Buono & 3,049 \\ \hline
+Sonnet & T3  & Sì & Sì & No & Buono & Buono & 4,283 \\ \hline
+Sonnet & T4  & Sì & Sì & No & Buono & Buono & 16,927 \\ \hline
+Sonnet & T5  & Sì & Sì & No & Buono & Buono & 9,182 \\ \hline
 \rowcolor{tablerowwhite} \multicolumn{8}{|c|}{\textbf{Haiku}} \\ \hline
-Haiku & T1 & Sì & Parziale & No & Troppo severo & Buono & 13.315 \\ \hline
+Haiku & T1 & Sì & Parziale & No & Troppo severo & Buono & 13,315 \\ \hline
 Haiku & T2 & No & No & N/A & No & No & 1.114 \\ \hline
-Haiku & T3 & Sì & Sì & Sì (data) & Non buono & Ok & 1.524 \\ \hline
-Haiku & T4 & Sì & Sì & No & Buono & Buono & 3.479 \\ \hline
+Haiku & T3 & Sì & Sì & Sì (data) & Non buono & Ok & 1,524 \\ \hline
+Haiku & T4 & Sì & Sì & No & Buono & Buono & 3,479 \\ \hline
 Haiku & T5 & Sì & Sì & No & Quasi buono & Quasi buono & 9.064 \\ \hline
 \rowcolor{tablerowwhite} \multicolumn{8}{|c|}{\textbf{Opus}} \\ \hline
-Opus & T1 & Sì & Sì & No & Buono & Buono & 2.452 \\ \hline
-Opus & T2 & Sì & Sì & No & Buono & Buono & 2.743 \\ \hline
-Opus & T3 & Sì & Sì & No & Buono & Buono & 1.668 \\ \hline
-Opus & T4 & Sì & Sì & No & Buono & Buono & 16.603 \\ \hline
-Opus & T5 & Sì & Sì & No & Buono & Buono & 9.892 \\ \hline
+Opus & T1 & Sì & Sì & No & Buono & Buono & 2,452 \\ \hline
+Opus & T2 & Sì & Sì & No & Buono & Buono & 2,743 \\ \hline
+Opus & T3 & Sì & Sì & No & Buono & Buono & 1,668 \\ \hline
+Opus & T4 & Sì & Sì & No & Buono & Buono & 16,603 \\ \hline
+Opus & T5 & Sì & Sì & No & Buono & Buono & 9,892 \\ \hline
 \caption{Risultati dei test comparativi tra i modelli Claude Haiku, Sonnet e Opus.}
 \label{tab:test-modelli}
 \end{longtable}
 \endgroup
 
-I risultati hanno evidenziato differenze significative tra i modelli. 
+I risultati, riportati nella tabella \ref{tab:test-modelli}, hanno evidenziato differenze significative tra i modelli. 
 
 \emph{Claude Haiku} ha mostrato comportamenti irregolari: nel test T2 non ha prodotto un \emph{JSON} valido e ha ignorato le regole, mentre nel test T3 ha introdotto un'allucinazione legata alla data corrente, e nel test T1 ha applicato criteri eccessivamente restrittivi nella valutazione della consistenza. 
 
@@ -179,7 +258,26 @@ La comunicazione con il modello avviene tramite le API REST esposte da \emph{Ant
 La temperature è un parametro che controlla il grado di casualità nella selezione dei token durante la generazione: valori elevati rendono il modello più creativo e variabile, valori bassi lo rendono più deterministico e conservativo. Poiché l'obiettivo è produrre \emph{JSON} strutturato e riproducibile, la temperature è impostata a zero, eliminando qualsiasi variabilità nella risposta.
 
 \subsubsection{Struttura del risultato}
-L'esito dell'analisi viene distribuito su due collezioni distinte. La prima, \textit{AiReport}, è collegata al report complessivo del documento e raccoglie le sezioni rilevate come mancanti. La seconda, \textit{AiSection}, contiene il dettaglio per ogni sezione che presenta almeno un'anomalia: le sezioni prive di errori non producono alcun record, mantenendo il risultato compatto. Per ogni sezione vengono registrati i problemi di policy, le incoerenze rilevate e una severità (\textit{Bassa}, \textit{Media} o \textit{Grave}), che verrà utilizzata per il calcolo dello score complessivo del documento analizzato.
+L'esito dell'analisi viene distribuito su due collezioni distinte. La prima, \textit{AiReport} (riportata nella figura \ref{fig:aiReport}), è collegata al report complessivo del documento e raccoglie le sezioni rilevate come mancanti. La seconda, \textit{AiSection} (riportata nella figura \ref{fig:aiSection}), contiene il dettaglio per ogni sezione che presenta almeno un'anomalia: le sezioni prive di errori non producono alcun record, mantenendo il risultato compatto. Per ogni sezione vengono registrati i problemi di policy, le incoerenze rilevate e una severità (\textit{Bassa}, \textit{Media} o \textit{Grave}), che verrà utilizzata per il calcolo dello score complessivo del documento analizzato.
+
+\begin{figure}[h]
+    \centering
+    \begin{minipage}{0.4\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{schemas/aiReport}
+        \caption{Collection: AiReport}
+        \label{fig:aiReport}
+    \end{minipage}
+    \hspace{1cm}
+    \begin{minipage}{0.35\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{schemas/aiSection}
+        \caption{Collection: \\AiSection}
+        \label{fig:aiSection}
+    \end{minipage}
+\end{figure}
+
+
 
 % TODO: da mettere nella parte pratica
 % \subsection{Robustezza e gestione degli errori}
