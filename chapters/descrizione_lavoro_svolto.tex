@@ -1,6 +1,212 @@
 \chapter{Progettazione e codifica}
 \label{cap:progettazione_codifica}
-La fase di progettazione e codifica del progetto è stata condotta seguendo un approccio iterativo e incrementale, per favorire una maggiore flessibilità. Nelle fasi iniziali, si è proceduto con un'analisi analitica di tipo top-down per comprendere il problema e delineare i requisiti fondamentali
-. Successivamente, si è passati a una progettazione di dettaglio, abbozzando in linea generale le classi necessarie, i loro attributi e i metodi (le responsabilità) che avrebbero dovuto esporre
-. In questa primissima fase, strumenti come i diagrammi UML sono stati impiegati in modo descrittivo (come sketch ad alto livello) per comunicare le idee principali e le dipendenze, prima di scendere nei dettagli tecnici della codifica
-.
+La fase di progettazione e codifica è stata condotta seguendo un approccio iterativo e incrementale. Nelle fasi iniziali si è proceduto con un'analisi top-down per comprendere il problema e delineare i requisiti fondamentali, abbozzando le strutture principali, i loro attributi e i metodi che avrebbero dovuto esporre. Strumenti come i diagrammi \emph{\gls{uml}\glsfirstoccur} sono stati impiegati come sketch ad alto livello per comunicare le idee principali e le dipendenze prima di scendere nei dettagli tecnici.
+
+Man mano che l'implementazione procedeva, le scelte progettuali iniziali sono state soggette a continui raffinamenti. Questo modo di procedere ha permesso di rivedere le scelte architetturali affrontando tempestivamente i problemi tecnici e adottando soluzioni via via più adeguate.
+
+\section{Configurazione di base}
+Il progetto è stato sviluppato a partire da una monorepo utilizzata internamente dall'azienda, già configurata e predisposta per applicazioni \emph{NestJS}. La struttura era la seguente:
+
+\begin{verbatim}
+AI_DocumentConsistencyPlatform/
+|-- apps/
+    |-- api-core
+    |-- webapp
+\end{verbatim}
+
+Una monorepo è un singolo repository \emph{git} che contiene il codice sorgente di più applicazioni e librerie. Questo approccio permette di condividere codice tra progetti diversi, di effettuare modifiche atomiche che coinvolgono più applicazioni in un solo commit e di uniformare strumenti di build e testing su tutti i progetti (\cite{site:nx}). Nel caso specifico, \texttt{api-core} contiene il backend \emph{NestJS} e \texttt{webapp} il frontend \emph{React}: entrambi condividono la stessa configurazione di base e le stesse dipendenze di sviluppo.
+
+Essendo la monorepo già predisposta, l'attività si è limitata alla configurazione delle variabili d'ambiente necessarie per collegare i servizi \emph{AWS} utilizzati.
+
+\section{Backend}
+Le attività di backend comprendono la persistenza dei dati, il controllo dell'identità, il calcolo delle analisi, la gestione degli utenti e dei template, l'upload dei documenti e il parsing degli stessi, e l'analisi semantica del testo secondo le regole definite nei \emph{PolicyRuleset}.\\
+
+Il backend è organizzato per moduli, ciascuno responsabile di un dominio specifico dell'applicazione. Ogni modulo raccoglie controller, service e schema relativi alla propria area funzionale, seguendo la struttura imposta da \emph{NestJS}, come mostrato nella figura \ref{lst:struttura_repo}.
+
+\begin{lstlisting}[label={lst:struttura_repo}]
+AI_DocumentConsistencyPlatform/
+`-- apps/
+    |-- api-core/
+    |   |-- e2e
+    |   `-- src/
+    |       |-- app/
+    |       |   |-- ai
+    |       |   |-- document
+    |       |   |-- healtcheck
+    |       |   |-- parser
+    |       |   |-- policyRuleset
+    |       |   |-- reports
+    |       |   |-- rulebase
+    |       |   `-- user
+    |       |-- app.module.ts
+    |       `-- main.ts
+    `-- webapp
+\end{lstlisting}
+\captionof{lstlisting}{Struttura del repository backend}
+
+\subsection{Autenticazione e gestione degli utenti}
+La gestione dell'autenticazione è affidata ad \emph{Amazon Cognito}, un servizio \emph{AWS} che fornisce funzionalità di directory utenti, registrazione, accesso e recupero password (\cite{site:cognito}). È stato configurato uno \emph{user pool} con due gruppi: \texttt{user} e \texttt{admin}. Tutti gli utenti creati tramite l'applicativo vengono assegnati di default al gruppo \texttt{user}; per modificare il ruolo è necessario intervenire manualmente dalla console \emph{AWS}.
+
+Al momento della creazione di un account, \emph{Cognito} invia all'utente un'email contenente una password temporanea. Al primo accesso, l'utente è obbligato a sostituirla con una password personale. La gestione delle credenziali è interamente delegata a \emph{Cognito}: nel database dell'applicativo viene salvata esclusivamente l'email, necessaria per collegare l'identità dell'utente alle sue azioni all'interno del sistema.
+
+La sicurezza degli endpoint è gestita tramite il sistema di \textit{Guard} offerto da \emph{NestJS}. Per ogni richiesta in ingresso, una \textit{AuthGuard} (già presente nel boilerplate aziendale) intercetta la comunicazione e valida il token \gls{jwt} rilasciato da \gls{cognito}. Se il token risulta assente, alterato o scaduto, il sistema nega l'accesso restituendo \texttt{HTTP 403 Forbidden}.
+
+Per le operazioni amministrative, come la creazione o l'eliminazione degli utenti, viene concatenata una \texttt{AdminGuard} aggiuntiva (riportata nel blocco di codice \ref{lst:admin_guard}): estrae l'utente dall'oggetto della richiesta e verifica che i suoi gruppi includano il ruolo \texttt{admin}. Qualora i privilegi risultino insufficienti, la \textit{Guard} interrompe l'esecuzione lanciando una \texttt{ForbiddenException}.
+
+\begin{lstlisting}[label={lst:admin_guard}]
+@Injectable()
+export class AdminGuard implements CanActivate {
+canActivate(context: ExecutionContext): boolean {
+    const request = context.switchToHttp().getRequest();
+    const user = request.user;
+
+    if (!user?.groups?.includes('admin')) {
+        throw new ForbiddenException('Solo gli admin possono eseguire questa operazione');
+    }
+    return true;
+    }
+}
+\end{lstlisting}
+\captionof{lstlisting}{Implementazione della AdminGuard}
+
+\subsection{Base di dati}
+Il database è strutturato in sei collezioni, rappresentate nella figura \ref{fig:baseDati}. Le relazioni tra di esse rispecchiano il flusso applicativo: un utente carica un documento, su cui viene avviata un'analisi, i cui risultati vengono suddivisi per sezione.\\
+
+\textbf{User} memorizza esclusivamente l'email dell'utente, poiché la gestione delle credenziali è delegata ad \gls{cognito}. Il campo \texttt{\_id} viene utilizzato come chiave esterna nelle altre collezioni per tracciare la proprietà delle risorse.\\
+
+\textbf{DocumentS} rappresenta un documento caricato dall'utente. Contiene i metadati del file (nome, tipo, dimensione), il percorso di archiviazione su S3 (\texttt{pathDocument}), lo stato di elaborazione tramite un campo enum (\texttt{status}) e il riferimento all'utente proprietario.\\
+
+\textbf{PolicyRuleset} rappresenta un template di analisi configurabile. Definisce le regole dimensionali (lunghezza minima e massima delle sezioni), le sezioni obbligatorie (\texttt{mustHaveSections}), il contesto e le policy da applicare durante l'analisi semantica. Il campo \texttt{userId} è opzionale: se assente, il ruleset viene trattato come template di default, disponibile a tutti gli utenti della piattaforma. I template personalizzati, associati a uno specifico utente tramite \texttt{userId}, sono stati introdotti in una fase successiva come requisito opzionale, una volta completati i requisiti obbligatori nei tempi previsti.\\
+
+\textbf{AnalysisReport} è il documento principale prodotto dall'analisi. Associa l'analisi prodotta a un documento e al ruleset utilizzato tramite \texttt{documentId} e \texttt{policyId}, infine aggrega i punteggi di qualità calcolati: sezioni mancanti, consistenza e rispetto dei limiti dimensionali.\\
+
+\textbf{RulebaseSection} registra l'esito della validazione rule-based per ciascuna sezione del documento analizzato. È vincolata all'analisi tramite \texttt{analysisReportId} e indica tramite il flag booleano \texttt{passed} se la sezione ha rispettato i vincoli del ruleset.\\
+
+\textbf{AiReport} e \textbf{AiSection} raccolgono i risultati dell'analisi semantica condotta tramite \emph{Anthropic Claude}. \texttt{AiReport} è collegato all'analisi complessiva e riporta le sezioni mancanti rilevate dal modello. \texttt{AiSection} dettaglia l'esito per ciascuna sezione: la policy applicata, il giudizio di consistenza, la severity e le eventuali osservazioni.
+
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=1\textwidth]{schemas/schema}
+    \caption{Basi di dati}
+    \label{fig:baseDati}
+\end{figure}
+
+\newpage
+
+\section{Flusso di analisi}
+L'analisi di un documento si articola in una sequenza di fasi, dalla ricezione del file fino alla notifica del risultato al frontend. Il flusso è rappresentato in figura \ref{fig:flow}.\\
+
+L'upload avviene tramite una richiesta \texttt{POST /upload} in formato \texttt{multipart/form-data}. \gls{multer} è la libreria \emph{Node.js} che gestisce i dati in ingresso di tipo \texttt{multipart/form-data}, aggiungendo all'oggetto della richiesta le informazioni sul file ricevuto (\cite{site:multer}). In questa fase viene configurato con \texttt{memoryStorage}, mantenendo il file in memoria anziché scriverlo su disco, in modo da poterlo trasmettere direttamente ad {\emph{\gls{amazons3}}\glsfirstoccur} e al parser senza passaggi intermedi. Prima di procedere, viene verificata l'estensione del file: sono accettati esclusivamente i formati \texttt{.pdf}, \texttt{.docx} e \texttt{.md}.\\
+
+Una volta superata la validazione, il file viene caricato su \emph{S3} e viene creato il record del documento nel database con stato \texttt{PENDING}. Se il salvataggio su \emph{S3} va a buon fine ma la creazione del record fallisce, viene effettuato un rollback eliminando il file già caricato. Viene inoltre verificato che l'utente non abbia più di tre analisi in esecuzione contemporaneamente, tale limite viene approfondito nella sezione %TODO.\\
+
+Il file viene poi convertito in \emph{Markdown}, che costituisce l’input comune per tutte le fasi successive. L'analisi del documento si divide in due rami paralleli: la validazione rule-base, che verifica il rispetto dei vincoli dimensionali definiti nel \emph{PolicyRuleset}, e l'analisi semantica condotta tramite le API di \emph{Anthropic Claude}. I risultati di entrambe vengono poi aggregati nel calcolo del quality score complessivo.\\
+
+Prima di aggiornare lo stato del documento a \texttt{COMPLETED} e notificare l'utente, viene verificato che il documento non sia stato eliminato nel frattempo. La notifica al frontend avviene tramite \emph{WebSocket}, che aggiorna la cronologia, invia una notifica di analisi conclusa e, se l'utente si trova nella pagina di caricamento, la aggiorna automaticamente.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.6\textwidth]{flow.png}
+    \caption{Flusso di analisi}
+    \label{fig:flow}
+\end{figure}
+
+\subsection{Parsing e normalizzazione documentale}
+Una volta archiviato il file, il contenuto viene convertito in \emph{Markdown} tramite un'architettura \emph{Strategy}: in base al tipo di file ricevuto, viene selezionato il parser appropriato. I file \texttt{.md} vengono restituiti così come sono, senza alcuna trasformazione. I \texttt{.docx} e i \texttt{.pdf} richiedono invece una conversione, affrontata in modo diverso a causa delle differenze strutturali tra i due formati.
+
+\subsubsection{Parsing di file DOCX}
+I file \texttt{.docx} vengono convertiti in due fasi: prima da DOCX a HTML tramite \gls{mammoth}, poi da HTML a \emph{Markdown} tramite \gls{turndown}. Durante lo sviluppo è emerso un problema nella conversione delle tabelle: \gls{mammoth} genera HTML valido per il contenuto testuale, ma produce strutture \texttt{<table>} prive dei tag \texttt{<thead>} e \texttt{<tbody>}, che \gls{turndown} non riconosce correttamente come tabelle \emph{Markdown}. Per risolvere il problema si è intervenuti in due modi: una trasformazione preventiva sull'HTML grezzo, che individua la prima riga di ogni tabella e la racchiude in un \texttt{<thead>} esplicito, e l'adozione del plugin \texttt{turndown-plugin-gfm}. Viene inoltre aggiunta una regola per ignorare le immagini, che non sono rilevanti per l'analisi testuale.\\
+
+Il \emph{gfm} (\emph{GitHub Flavored Markdown}) è un'estensione della specifica \emph{Markdown} originale sviluppata da \emph{GitHub}, basata su \emph{CommonMark} (\cite{site:gfm}). Introduce sintassi aggiuntive non previste dallo standard, tra cui il supporto alle tabelle tramite la notazione con barre verticali. Il plugin \texttt{turndown-plugin-gfm} estende \gls{turndown} con questa specifica, permettendo di convertire correttamente le strutture \texttt{<table>} HTML in tabelle \emph{Markdown} nel formato atteso dai moduli di analisi successivi.\\
+
+\subsubsection{Parsing di file PDF}
+Il formato PDF rappresenta il caso più complesso. A differenza del DOCX, che contiene una struttura semantica nativa (titoli, paragrafi e tabelle sono elementi espliciti del formato), un PDF è una sequenza di istruzioni grafiche che indicano dove posizionare ogni carattere sulla pagina. Le informazioni semantiche vengono perse: estrarre il testo in modo grezzo produce un risultato disordinato, con sezioni mescolate e tabelle illeggibili.\\
+
+Identificare i titoli sarebbe stato possibile solo per approssimazione: analizzare la lunghezza delle frasi, la dimensione del font o la presenza di grassetto avrebbe richiesto di calcolare le distanze in pixel tra i caratteri, senza alcuna garanzia sul risultato. Per le tabelle il problema era ancora più complesso, richiedendo di mappare la posizione di ogni elemento grafico sulla pagina per ricostruirne la struttura. Eppure questa informazione è fondamentale per entrambi i moduli di analisi: il modulo rule-base ne ha bisogno per delimitare correttamente le sezioni, mentre il modulo AI ne ha bisogno per verificare la presenza dei capitoli obbligatori e analizzare il contenuto strutturato.\\
+
+La soluzione è stata \gls{docling}, una libreria open source sviluppata da \emph{IBM Research} (\cite{site:docling}) per la conversione di documenti in formati adatti all'elaborazione da parte di modelli di linguaggio. Docling tratta ogni pagina del PDF come un'immagine e applica modelli di \emph{machine learning} specializzati per riconoscerne la struttura visiva prima di estrarne il testo. A differenza dei modelli generativi, questi modelli non comprendono semanticamente il contenuto, ma riconoscono con precisione dove si trovano titoli, paragrafi, tabelle e altri elementi. I due modelli principali utilizzati sono il \emph{Layout Model}, che classifica le regioni della pagina per tipo, e \emph{TableFormer}, che a partire dalle regioni di tipo tabella ricostruisce righe, colonne e celle di intestazione.
+
+\paragraph{Integrazione con Docling:}
+Poiché il core di \gls{docling} è scritto in \emph{Python}, l'integrazione con il backend \emph{NestJS} richiede un livello intermedio. \emph{Docling Serve} è un server REST che espone via HTTP le funzionalità di \gls{docling} ed è eseguito in un container \emph{Docker} separato sulla porta \texttt{5001}. Il backend comunica con esso tramite \texttt{docling-sdk}, che si occupa di costruire le richieste HTTP, gestire i task asincroni e recuperare il risultato.\\
+
+\emph{Docling Serve} espone due meccanismi per monitorare lo stato di un task asincrono: il polling HTTP sull'endpoint \texttt{/v1/status/poll/\{taskId\}} e una connessione \emph{WebSocket} sull'endpoint \texttt{/v1/status/ws/\{taskId\}}, attraverso cui il server notifica il client al completamento dell'elaborazione. Si è scelto di adottare la modalità ibrida offerta dall'SDK (\texttt{method: 'hybrid'}), che tenta prima la connessione \emph{WebSocket} e ricade automaticamente sul polling HTTP in caso di fallimento, garantendo sia l'efficienza della connessione persistente sia la robustezza del fallback.\\
+
+La conversione avviene in tre fasi, il cui codice è riportato nel blocco \ref{lst:pdf_parser}. Nella prima, \texttt{convertFileAsync} invia il file tramite una richiesta \texttt{POST} multipart e restituisce immediatamente un oggetto \texttt{AsyncConversionTask} senza attendere il completamento dell'elaborazione. I principali parametri di conversione configurati sono:
+\begin{itemize}
+    \item output esclusivo in \emph{Markdown};
+    \item disabilitazione dell'\emph{\gls{ocr}\glsfirstoccur} poiché i PDF elaborati contengono testo selezionabile;
+    \item omissione delle immagini dall'output.
+\end{itemize}
+
+Nella seconda fase, \texttt{task.waitForCompletion()} blocca l'esecuzione fino al completamento del task tramite il meccanismo ibrido configurato. Nella terza, \texttt{task.getResult()} recupera il documento convertito: il contenuto \emph{Markdown} è disponibile nel campo \texttt{document.md\_content} e viene post-processato per decodificare le entità HTML che \emph{Docling Serve} può introdurre durante la serializzazione.\\
+
+Nella terza fase, \texttt{task.getResult()} recupera il documento convertito dall'endpoint \texttt{/v1/result/\{taskId\}}. Il contenuto \emph{Markdown} è disponibile nel campo \texttt{document.md\_content} e viene post-processato per decodificare le entità HTML che \emph{Docling Serve} può introdurre durante la serializzazione.
+
+\begin{lstlisting}[label={lst:pdf_parser}]
+constructor() {
+  this.client = new Docling({
+    api: {
+      baseUrl: process.env.DOCLING_URL ?? 'http://localhost:5001',
+    },
+    progress: {
+      method: 'hybrid',
+      websocketTimeout: 5000,
+    },
+  });
+}
+
+async parseToMarkdown(file: Express.Multer.File): Promise<string> {
+  const task = await this.client.convertFileAsync({
+    files: Buffer.from(file.buffer),
+    filename: file.originalname,
+    to_formats: ['md'],
+    do_ocr: false,
+    image_export_mode: 'placeholder',
+    include_images: false,
+    do_picture_description: false,
+  });
+
+  await task.waitForCompletion();
+  const result = await task.getResult();
+
+  return (result.document?.md_content ?? '')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&');
+}
+\end{lstlisting}
+\captionof{lstlisting}{Implementazione del PdfParserAdapter}
+
+\emph{Docling Serve} espone due meccanismi per monitorare lo stato di un task asincrono: il polling HTTP sull'endpoint \texttt{/v1/status/poll/\{taskId\}} e una connessione \emph{WebSocket} sull'endpoint \texttt{/v1/status/ws/\{taskId\}}, attraverso cui il server notifica il client al completamento dell'elaborazione. Si è scelto di adottare la modalità ibrida offerta dall'SDK (\texttt{method: 'hybrid'}), che tenta prima la connessione \emph{WebSocket} e ricade automaticamente sul polling HTTP in caso di fallimento, garantendo sia l'efficienza della connessione persistente sia la robustezza del fallback.
+
+
+
+
+
+\subsection{Upload del documento}
+
+\subsection{Validazione con Multer}
+\subsection{Upload su Amazon S3}
+\subsection{Parsing}
+\subsection{Analisi docuemntale}
+\subsubsection{Rule-base}
+\subsubsection{Anthropic Claude}
+\subsection{Quality score}
+\subsection{Aggiornamento dello stato}
+\subsection{Invio di WebSocket}
+
+
+\subsection{Gestione degli errori}
+
+\section{Frontend}
+\subsection{Organizzazione repository}
+\subsection{Componenti principali}
+\subsection{Gestione dello stato}
+
+\section{Strategia di Testing}
+Per garantire che il codice prodotto rispettasse i requisiti prefissati e non introducesse regressioni in corso d'opera, le attività di verifica e validazione sono state condotte durante tutto lo sviluppo. A ogni fase di sviluppo è stata affiancata una corrispondente fase di test, seguendo il principio per cui i difetti vanno individuati il prima possibile \emph{(fail-fast)}. La strategia di analisi dinamica è stata strutturata come segue:
+\begin{itemize}
+    \item \textbf{Test di unità}: al termine dello sviluppo di ogni singola classe, o a seguito di una sua modifica, sono stati eseguiti test di unità per verificarne il comportamento in isolamento dal resto del sistema.
+    \item \textbf{Test di integrazione}: una volta superati i test di unità, sono stati implementati test che verificano la corretta interazione tra i moduli, simulando le richieste HTTP in ingresso ai controller e osservando il risultato prodotto dall'intera catena applicativa.
+\end{itemize}
