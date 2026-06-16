@@ -26,6 +26,15 @@
 \newacronym[description={\glslink{uml}{Unified Modeling Language}}]
     {umlg}{UMLg}{Unified Modeling Language}
 
+\newacronym[description={\glslink{sse}{Server-Sent Events}}]
+    {sseg}{SSEg}{Server-Sent Events}
+
+\newacronym[description={\glslink{ocr}{Optical Character Recognition}}]
+    {ocrg}{OCRg}{Optical Character Recognition}
+
+\newacronym[description={\glslink{spa}{Single Page Application}}]
+    {spag}{SPAg}{Single Page Application}
+
 % Glossary entries
 \newglossaryentry{api} {
     name=\glslink{api}{API},
@@ -103,7 +112,7 @@
     name=\glslink{rendanheyi}{RenDanHeYi},
     text=RenDanHeYi,
     sort=rendanheyi,
-    description={il \emph{RenDanHeYi} è un modello organizzativo sviluppato da Zhang Ruimin, fondatore del gruppo Haier, nel 2005. Il termine è la contrazione delle parole cinesi per "persona", "ordine" e "unificazione". Rappresenta una visione in cui il rapporto tra impresa e individuo non è gerarchico ma reciproco: l'azienda mette le persone in condizione di esprimere il proprio potenziale, che a sua volta genera valore per l'organizzazione. Le unità operative, dette micro-imprese, godono di autonomia decisionale e responsabilità diretta sui risultati.}
+    description={il \emph{RenDanHeYi} è un modello organizzativo sviluppato da Zhang Ruimin, fondatore del gruppo Haier, nel 2005. Il termine è la contrazione delle parole cinesi per "persona", "ordine" e "unificazione". Rappresenta una visione in cui il rapporto tra impresa e individuo non è gerarchico ma reciproco: l'azienda mette le persone in condizione di esprimere il proprio potenziale, che a sua volta genera valore per l'organizzazione. Le unità operative, dette micro-imprese, godono di autonomia decisionale e responsabilità diretta sui risultati}
 }
 
 \newglossaryentry{holacracy} {
@@ -117,56 +126,56 @@
     name=\glslink{openplatform}{Open Platform Organization},
     text=Open Platform Organization,
     sort=openplatformorganization,
-    description={\emph{Open Platform Organization} è un modello organizzativo che integra i principi del rendanheyi e dell'holacracy per creare un'organizzazione in cui la \emph{leadership} è diffusa, le decisioni sono distribuite e le diverse funzioni aziendali collaborano attorno a uno scopo comune.}
+    description={\emph{Open Platform Organization} è un modello organizzativo che integra i principi del rendanheyi e dell'holacracy per creare un'organizzazione in cui la \emph{leadership} è diffusa, le decisioni sono distribuite e le diverse funzioni aziendali collaborano attorno a uno scopo comune}
 }
 
 \newglossaryentry{multer} {
     name=\glslink{multer}{Multer},
     text=Multer,
     sort=multer,
-    description={\emph{Multer} è un middleware per Node.js progettato per la gestione delle richieste HTTP di tipo \emph{multipart/form-data}, utilizzato principalmente per la ricezione di file caricati dal client. Espone il contenuto del file come buffer in memoria, rendendolo disponibile al livello applicativo senza richiedere la scrittura su disco.}
+    description={\emph{Multer} è un middleware per Node.js progettato per la gestione delle richieste HTTP di tipo \emph{multipart/form-data}, utilizzato principalmente per la ricezione di file caricati dal client. Espone il contenuto del file come buffer in memoria, rendendolo disponibile al livello applicativo senza richiedere la scrittura su disco}
 }
 
 \newglossaryentry{mammoth} {
     name=\glslink{mammoth}{Mammoth},
     text=Mammoth,
     sort=mammoth,
-    description={\emph{Mammoth} è una libreria per Node.js che converte documenti in formato DOCX in HTML, preservando la struttura semantica del documento originale come titoli, paragrafi, elenchi e tabelle.}
+    description={\emph{Mammoth} è una libreria per Node.js che converte documenti in formato DOCX in HTML, preservando la struttura semantica del documento originale come titoli, paragrafi, elenchi e tabelle}
 }
 
 \newglossaryentry{turndown} {
     name=\glslink{turndown}{Turndown},
     text=Turndown,
     sort=turndown,
-    description={\emph{Turndown} è una libreria per Node.js che converte HTML in Markdown. Supporta l'estensione tramite plugin, tra cui \emph{turndown-plugin-gfm} che aggiunge il supporto alla sintassi GitHub Flavored Markdown, necessaria per la corretta rappresentazione delle tabelle.}
+    description={\emph{Turndown} è una libreria per Node.js che converte HTML in Markdown. Supporta l'estensione tramite plugin, tra cui \emph{turndown-plugin-gfm} che aggiunge il supporto alla sintassi GitHub Flavored Markdown, necessaria per la corretta rappresentazione delle tabelle}
 }
 
 \newglossaryentry{docling} {
     name=\glslink{docling}{Docling},
     text=Docling,
     sort=docling,
-    description={\emph{Docling} è un progetto open source sviluppato da IBM Research per l'estrazione e la conversione di documenti PDF in formati strutturati come Markdown. A differenza degli estrattori di testo tradizionali, Docling tratta ogni pagina come un'immagine e applica modelli di machine learning per riconoscere la struttura visiva del documento prima di estrarne il contenuto, consentendo di preservare titoli, tabelle ed elenchi nel risultato finale. L'integrazione con backend non Python avviene tramite Docling Serve, un server REST che espone le funzionalità della libreria via HTTP.}
+    description={\emph{Docling} è un progetto open source sviluppato da IBM Research per l'estrazione e la conversione di documenti PDF in formati strutturati come Markdown. A differenza degli estrattori di testo tradizionali, Docling tratta ogni pagina come un'immagine e applica modelli di machine learning per riconoscere la struttura visiva del documento prima di estrarne il contenuto, consentendo di preservare titoli, tabelle ed elenchi nel risultato finale. L'integrazione con backend non Python avviene tramite Docling Serve, un server REST che espone le funzionalità della libreria via HTTP}
 }
 
 \newglossaryentry{strategy} {
     name=\glslink{strategy}{Strategy},
     text=Strategy,
     sort=strategy,
-    description={\emph{Strategy} è un pattern di progettazione comportamentale che definisce una famiglia di algoritmi, li incapsula ciascuno in una classe separata e li rende intercambiabili attraverso un'interfaccia comune. Il chiamante non conosce la strategia concreta utilizzata, ma interagisce unicamente con l'interfaccia, delegando l'implementazione specifica alla strategia selezionata. Questo approccio favorisce l'estensibilità: aggiungere un nuovo algoritmo richiede unicamente la creazione di una nuova classe aderente all'interfaccia, senza modificare il codice esistente.}
+    description={\emph{Strategy} è un pattern di progettazione comportamentale che definisce una famiglia di algoritmi, li incapsula ciascuno in una classe separata e li rende intercambiabili attraverso un'interfaccia comune. Il chiamante non conosce la strategia concreta utilizzata, ma interagisce unicamente con l'interfaccia, delegando l'implementazione specifica alla strategia selezionata. Questo approccio favorisce l'estensibilità: aggiungere un nuovo algoritmo richiede unicamente la creazione di una nuova classe aderente all'interfaccia, senza modificare il codice esistente}
 }
 
 \newglossaryentry{cognito} {
     name=\glslink{cognito}{AWS Cognito},
     text=AWS Cognito,
     sort=cognito,
-    description={\emph{AWS Cognito} è un servizio di identity management fornito da Amazon Web Services che gestisce la registrazione, l'autenticazione e il controllo degli accessi degli utenti. Permette di definire gruppi di utenti a cui assegnare ruoli distinti e si integra con le applicazioni tramite standard aperti come OAuth 2.0 e OpenID Connect, emettendo token JWT alla conclusione del flusso di autenticazione.}
+    description={\emph{AWS Cognito} è un servizio di identity management fornito da Amazon Web Services che gestisce la registrazione, l'autenticazione e il controllo degli accessi degli utenti. Permette di definire gruppi di utenti a cui assegnare ruoli distinti e si integra con le applicazioni tramite standard aperti come OAuth 2.0 e OpenID Connect, emettendo token JWT alla conclusione del flusso di autenticazione}
 }
 
 \newglossaryentry{jwt} {
     name=\glslink{jwt}{JWT},
     text=JWT,
     sort=jwt,
-    description={\emph{JWT} (JSON Web Token) è uno standard aperto che definisce un formato compatto per la trasmissione sicura di informazioni tra due parti sotto forma di oggetto JSON. Un JWT è composto da tre parti codificate in Base64 e separate da un punto: l'header, che specifica il tipo di token e l'algoritmo di firma; il payload, che contiene le informazioni sull'utente dette \emph{claims}; e la firma, che garantisce l'integrità del token e ne permette la verifica tramite chiave pubblica senza dover contattare il server emittente.}
+    description={\emph{JWT} (JSON Web Token) è uno standard aperto che definisce un formato compatto per la trasmissione sicura di informazioni tra due parti sotto forma di oggetto JSON. Un JWT è composto da tre parti codificate in Base64 e separate da un punto: l'header, che specifica il tipo di token e l'algoritmo di firma; il payload, che contiene le informazioni sull'utente dette \emph{claims}; e la firma, che garantisce l'integrità del token e ne permette la verifica tramite chiave pubblica senza dover contattare il server emittente}
 }
 
 \newglossaryentry{interceptor} {
@@ -178,75 +187,87 @@
     elaborate dall'applicazione, consentendo di modificarle in modo centralizzato. 
     Nel contesto di Axios, viene utilizzato per aggiungere automaticamente 
     l'header di autenticazione a ogni richiesta senza dover ripetere la logica 
-    in ogni chiamata.}
+    in ogni chiamata}
 }
 
 \newglossaryentry{aws} {
     name=\glslink{aws}{AWS},
     text=AWS,
     sort=aws,
-    description={\emph{AWS} (Amazon Web Services) è la piattaforma di cloud computing di Amazon. Fornisce un insieme di servizi infrastrutturali accessibili via internet, tra cui capacità di calcolo, storage, database e strumenti di gestione delle identità, eliminando la necessità di possedere e mantenere hardware fisico.}
+    description={\emph{AWS} (Amazon Web Services) è la piattaforma di cloud computing di Amazon. Fornisce un insieme di servizi infrastrutturali accessibili via internet, tra cui capacità di calcolo, storage, database e strumenti di gestione delle identità, eliminando la necessità di possedere e mantenere hardware fisico}
 }
 
 \newglossaryentry{alb} {
     name=\glslink{alb}{ALB},
     text=Application Load Balancer,
     sort=alb,
-    description={\emph{ALB} (Application Load Balancer) è un servizio AWS che distribuisce il traffico in ingresso verso uno o più servizi di destinazione. Opera a livello applicativo e supporta il routing basato sul path della richiesta HTTP: è possibile definire regole che instradano le richieste verso destinazioni diverse in base all'URL, permettendo di esporre più servizi distinti tramite un unico punto di ingresso.}
+    description={\emph{ALB} (Application Load Balancer) è un servizio AWS che distribuisce il traffico in ingresso verso uno o più servizi di destinazione. Opera a livello applicativo e supporta il routing basato sul path della richiesta HTTP: è possibile definire regole che instradano le richieste verso destinazioni diverse in base all'URL, permettendo di esporre più servizi distinti tramite un unico punto di ingresso}
 }
 
 \newglossaryentry{ecs} {
     name=\glslink{ecs}{ECS},
     text=ECS,
     sort=ecs,
-    description={\emph{ECS} (Elastic Container Service) è il servizio AWS per l'esecuzione di container Docker. Permette di definire i container da eseguire tramite \emph{task definition}, che specificano l'immagine da utilizzare, le risorse assegnate e le variabili d'ambiente. ECS si occupa di avviare e mantenere i container in esecuzione, riavviandoli automaticamente in caso di failure.}
+    description={\emph{ECS} (Elastic Container Service) è il servizio AWS per l'esecuzione di container Docker. Permette di definire i container da eseguire tramite \emph{task definition}, che specificano l'immagine da utilizzare, le risorse assegnate e le variabili d'ambiente. ECS si occupa di avviare e mantenere i container in esecuzione, riavviandoli automaticamente in caso di failure}
 }
 
 \newglossaryentry{ecr} {
     name=\glslink{ecr}{ECR},
     text=ECR,
     sort=ecr,
-    description={\emph{ECR} (Elastic Container Registry) è il servizio AWS per l'archiviazione privata di immagini Docker. Funziona come un registry accessibile solo all'interno dell'account AWS, garantendo che le immagini dei container non siano pubblicamente raggiungibili. ECS preleva le immagini direttamente da ECR al momento dell'avvio dei container.}
+    description={\emph{ECR} (Elastic Container Registry) è il servizio AWS per l'archiviazione privata di immagini Docker. Funziona come un registry accessibile solo all'interno dell'account AWS, garantendo che le immagini dei container non siano pubblicamente raggiungibili. ECS preleva le immagini direttamente da ECR al momento dell'avvio dei container}
 }
 
 \newglossaryentry{amplify} {
     name=\glslink{amplify}{AWS Amplify},
     text=AWS Amplify,
     sort=amplify,
-    description={\emph{AWS Amplify} è un servizio AWS che semplifica il deploy e l'hosting di applicazioni frontend. Si collega a un repository Git, esegue automaticamente il build dell'applicazione ad ogni push sul branch configurato e distribuisce il risultato tramite una rete di distribuzione globale. Fornisce inoltre una libreria JavaScript che semplifica l'integrazione con altri servizi AWS, tra cui Cognito per la gestione dell'autenticazione.}
+    description={\emph{AWS Amplify} è un servizio AWS che semplifica il deploy e l'hosting di applicazioni frontend. Si collega a un repository Git, esegue automaticamente il build dell'applicazione ad ogni push sul branch configurato e distribuisce il risultato tramite una rete di distribuzione globale. Fornisce inoltre una libreria JavaScript che semplifica l'integrazione con altri servizi AWS, tra cui Cognito per la gestione dell'autenticazione}
 }
 
 \newglossaryentry{deploy} {
     name=\glslink{deploy}{deploy},
     text=deploy,
     sort=deploy,
-    description={\emph{Deploy} indica il processo di rilascio di una nuova versione di un'applicazione nell'ambiente di esecuzione. Nel contesto di una piattaforma cloud, comprende la costruzione dell'immagine Docker aggiornata, il suo caricamento sul registry e l'aggiornamento del servizio in esecuzione affinché utilizzi la nuova versione.}
+    description={\emph{Deploy} indica il processo di rilascio di una nuova versione di un'applicazione nell'ambiente di esecuzione. Nel contesto di una piattaforma cloud, comprende la costruzione dell'immagine Docker aggiornata, il suo caricamento sul registry e l'aggiornamento del servizio in esecuzione affinché utilizzi la nuova versione}
 }
 
 \newglossaryentry{githubactions} {
     name=\glslink{githubactions}{GitHub Actions},
     text=GitHub Actions,
     sort=githubactions,
-    description={\emph{GitHub Actions} è il sistema di automazione integrato in GitHub. Permette di definire \emph{workflow} — sequenze di operazioni automatiche descritte in file YAML — che vengono eseguiti al verificarsi di eventi sul repository, come un push o una pull request. È comunemente utilizzato per automatizzare il processo di build, esecuzione dei test e deploy dell'applicazione.}
+    description={\emph{GitHub Actions} è il sistema di automazione integrato in GitHub. Permette di definire \emph{workflow} — sequenze di operazioni automatiche descritte in file YAML — che vengono eseguiti al verificarsi di eventi sul repository, come un push o una pull request. È comunemente utilizzato per automatizzare il processo di build, esecuzione dei test e deploy dell'applicazone.}
 }
 
 \newglossaryentry{uml} {
     name=\glslink{uml}{UML},
     text=UML,
     sort=uml,
-    description={in ingegneria del software \emph{UML, Unified Modeling Language} (ing. linguaggio di modellazione unificato) è un linguaggio di modellazione e specifica basato sul paradigma object-oriented. L'\emph{UML} svolge un'importantissima funzione di ``lingua franca'' nella comunità della progettazione e programmazione a oggetti. Gran parte della letteratura di settore usa tale linguaggio per descrivere soluzioni analitiche e progettuali in modo sintetico e comprensibile a un vasto pubblico.}
+    description={in ingegneria del software \emph{UML, Unified Modeling Language} (ing. linguaggio di modellazione unificato) è un linguaggio di modellazione e specifica basato sul paradigma object-oriented. L'\emph{UML} svolge un'importantissima funzione di ``lingua franca'' nella comunità della progettazione e programmazione a oggetti. Gran parte della letteratura di settore usa tale linguaggio per descrivere soluzioni analitiche e progettuali in modo sintetico e comprensibile a un vasto pubblico}
 }
 
 \newglossaryentry{amazons3}{
     name={Amazon S3},
     text={Amazon S3},
     sort={amazons3},
-    description={Acronimo di \emph{Simple Storage Service}, è un servizio di archiviazione a oggetti offerto da \emph{Amazon Web Services} che garantisce scalabilità, disponibilità, sicurezza e prestazioni. I dati vengono organizzati in contenitori chiamati \emph{bucket} e sono accessibili tramite interfaccia web.}
+    description={(\emph{Simple Storage Service}), è un servizio di archiviazione a oggetti offerto da \emph{Amazon Web Services} che garantisce scalabilità, disponibilità, sicurezza e prestazioni. I dati vengono organizzati in contenitori chiamati \emph{bucket} e sono accessibili tramite interfaccia web}
 }
 
 \newglossaryentry{ocr}{
     name={OCR},
     text={OCR},
     sort={ocr},
-    description={Acronimo di \emph{Optical Character Recognition}, indica la tecnologia che converte immagini contenenti testo in testo codificato in formato leggibile da un computer. Viene tipicamente impiegata per digitalizzare documenti scansionati o PDF privi di testo selezionabile}
+    description={Indica la tecnologia che converte immagini contenenti testo in testo codificato in formato leggibile da un computer. Viene tipicamente impiegata per digitalizzare documenti scansionati o PDF privi di testo selezionabile}
+}
+
+\newglossaryentry{sse}{
+    name={SSE},
+    text={SSE},
+    sort={sse},
+    description={ Tecnologia che permette a un server di inviare eventi in modo unidirezionale a un client tramite una connessione HTTP persistente, senza necessità di polling o WebSocket}
+}
+
+\newglossaryentry{spa}{
+    name={SPA},
+    description={Single Page Application: applicazione web che carica un'unica pagina HTML iniziale e aggiorna dinamicamente il contenuto tramite JavaScript, senza ricaricare l'intera pagina a ogni navigazione}
 }

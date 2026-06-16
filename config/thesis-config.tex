@@ -222,3 +222,7 @@
 \captionsetup[lstlisting]{position=bottom}
 \lstset{frame=none}
 \lstset{aboveskip=20pt, belowskip=0pt}
+
+\newcommand{\colorswatch}[1]{%
+  {\setlength{\fboxsep}{0pt}\fbox{\colorbox[HTML]{#1}{\phantom{\rule{0.35cm}{0.35cm}}}}}%
+}

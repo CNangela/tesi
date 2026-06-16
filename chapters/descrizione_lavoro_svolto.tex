@@ -31,6 +31,7 @@ AI_DocumentConsistencyPlatform/
     |   `-- src/
     |       |-- app/
     |       |   |-- ai
+    |       |   |-- analysisReport
     |       |   |-- document
     |       |   |-- healtcheck
     |       |   |-- parser
@@ -45,11 +46,11 @@ AI_DocumentConsistencyPlatform/
 \captionof{lstlisting}{Struttura del repository backend}
 
 \subsection{Autenticazione e gestione degli utenti}
-La gestione dell'autenticazione è affidata ad \emph{Amazon Cognito}, un servizio \emph{AWS} che fornisce funzionalità di directory utenti, registrazione, accesso e recupero password (\cite{site:cognito}). È stato configurato uno \emph{user pool} con due gruppi: \texttt{user} e \texttt{admin}. Tutti gli utenti creati tramite l'applicativo vengono assegnati di default al gruppo \texttt{user}; per modificare il ruolo è necessario intervenire manualmente dalla console \emph{AWS}.
+La gestione dell'autenticazione è affidata ad \emph{Amazon Cognito}, un servizio \emph{AWS} che fornisce funzionalità di directory utenti, registrazione, accesso e recupero password (\cite{site:cognito}). È stato configurato uno \emph{user pool} con due gruppi: \texttt{user} e \texttt{admin}. Tutti gli utenti creati tramite l'applicativo vengono assegnati di default al gruppo \texttt{user}; per modificare il ruolo è necessario intervenire manualmente dalla console \emph{AWS}.\\
 
-Al momento della creazione di un account, \emph{Cognito} invia all'utente un'email contenente una password temporanea. Al primo accesso, l'utente è obbligato a sostituirla con una password personale. La gestione delle credenziali è interamente delegata a \emph{Cognito}: nel database dell'applicativo viene salvata esclusivamente l'email, necessaria per collegare l'identità dell'utente alle sue azioni all'interno del sistema.
+Al momento della creazione di un account, \emph{Cognito} invia all'utente un'email contenente una password temporanea. Al primo accesso, l'utente è obbligato a sostituirla con una password personale. La gestione delle credenziali è interamente delegata a \emph{Cognito}: nel database dell'applicativo viene salvata esclusivamente l'email, necessaria per collegare l'identità dell'utente alle sue azioni all'interno del sistema.\\
 
-La sicurezza degli endpoint è gestita tramite il sistema di \textit{Guard} offerto da \emph{NestJS}. Per ogni richiesta in ingresso, una \textit{AuthGuard} (già presente nel boilerplate aziendale) intercetta la comunicazione e valida il token \gls{jwt} rilasciato da \gls{cognito}. Se il token risulta assente, alterato o scaduto, il sistema nega l'accesso restituendo \texttt{HTTP 403 Forbidden}.
+La sicurezza degli endpoint è gestita tramite il sistema di \textit{Guard} offerto da \emph{NestJS}. Per ogni richiesta in ingresso, una \textit{AuthGuard} (già presente nel boilerplate aziendale) intercetta la comunicazione e valida il token \gls{jwt} rilasciato da \gls{cognito}. Se il token risulta assente, alterato o scaduto, il sistema nega l'accesso restituendo \texttt{HTTP 403 Forbidden}. Questa protezione è applicata a tutti gli endpoint ad eccezione di quelli relativi all'autenticazione.\\
 
 Per le operazioni amministrative, come la creazione o l'eliminazione degli utenti, viene concatenata una \texttt{AdminGuard} aggiuntiva (riportata nel blocco di codice \ref{lst:admin_guard}): estrae l'utente dall'oggetto della richiesta e verifica che i suoi gruppi includano il ruolo \texttt{admin}. Qualora i privilegi risultino insufficienti, la \textit{Guard} interrompe l'esecuzione lanciando una \texttt{ForbiddenException}.
 
@@ -74,11 +75,11 @@ Il database è strutturato in sei collezioni, rappresentate nella figura \ref{fi
 
 \textbf{User} memorizza esclusivamente l'email dell'utente, poiché la gestione delle credenziali è delegata ad \gls{cognito}. Il campo \texttt{\_id} viene utilizzato come chiave esterna nelle altre collezioni per tracciare la proprietà delle risorse.\\
 
-\textbf{DocumentS} rappresenta un documento caricato dall'utente. Contiene i metadati del file (nome, tipo, dimensione), il percorso di archiviazione su S3 (\texttt{pathDocument}), lo stato di elaborazione tramite un campo enum (\texttt{status}) e il riferimento all'utente proprietario.\\
+\textbf{DocumentS} rappresenta un documento caricato dall'utente. Contiene i metadati del file (nome, tipo, dimensione), il percorso di archiviazione su S3 (\texttt{pathDocument}) e il riferimento all'utente proprietario.\\
 
 \textbf{PolicyRuleset} rappresenta un template di analisi configurabile. Definisce le regole dimensionali (lunghezza minima e massima delle sezioni), le sezioni obbligatorie (\texttt{mustHaveSections}), il contesto e le policy da applicare durante l'analisi semantica. Il campo \texttt{userId} è opzionale: se assente, il ruleset viene trattato come template di default, disponibile a tutti gli utenti della piattaforma. I template personalizzati, associati a uno specifico utente tramite \texttt{userId}, sono stati introdotti in una fase successiva come requisito opzionale, una volta completati i requisiti obbligatori nei tempi previsti.\\
 
-\textbf{AnalysisReport} è il documento principale prodotto dall'analisi. Associa l'analisi prodotta a un documento e al ruleset utilizzato tramite \texttt{documentId} e \texttt{policyId}, infine aggrega i punteggi di qualità calcolati: sezioni mancanti, consistenza e rispetto dei limiti dimensionali.\\
+\textbf{AnalysisReport} è il documento principale prodotto dall'analisi. Associa l'analisi prodotta a un documento e al ruleset utilizzato tramite \texttt{documentId} e \texttt{policyId}, gestisce lo stato di elaborazione tramite un campo enum (\texttt{status}) e infine aggrega i punteggi di qualità calcolati: sezioni mancanti, consistenza e rispetto dei limiti dimensionali.\\
 
 \textbf{RulebaseSection} registra l'esito della validazione rule-based per ciascuna sezione del documento analizzato. È vincolata all'analisi tramite \texttt{analysisReportId} e indica tramite il flag booleano \texttt{passed} se la sezione ha rispettato i vincoli del ruleset.\\
 
@@ -87,61 +88,67 @@ Il database è strutturato in sei collezioni, rappresentate nella figura \ref{fi
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=1\textwidth]{schemas/schema}
+    \includegraphics[width=1.2\textwidth]{schemas/schema}
     \caption{Basi di dati}
     \label{fig:baseDati}
 \end{figure}
 
 \newpage
 
-\section{Flusso di analisi}
+\subsection{Flusso di analisi}
 L'analisi di un documento si articola in una sequenza di fasi, dalla ricezione del file fino alla notifica del risultato al frontend. Il flusso è rappresentato in figura \ref{fig:flow}.\\
 
-L'upload avviene tramite una richiesta \texttt{POST /upload} in formato \texttt{multipart/form-data}. \gls{multer} è la libreria \emph{Node.js} che gestisce i dati in ingresso di tipo \texttt{multipart/form-data}, aggiungendo all'oggetto della richiesta le informazioni sul file ricevuto (\cite{site:multer}). In questa fase viene configurato con \texttt{memoryStorage}, mantenendo il file in memoria anziché scriverlo su disco, in modo da poterlo trasmettere direttamente ad {\emph{\gls{amazons3}}\glsfirstoccur} e al parser senza passaggi intermedi. Prima di procedere, viene verificata l'estensione del file: sono accettati esclusivamente i formati \texttt{.pdf}, \texttt{.docx} e \texttt{.md}.\\
-
-Una volta superata la validazione, il file viene caricato su \emph{S3} e viene creato il record del documento nel database con stato \texttt{PENDING}. Se il salvataggio su \emph{S3} va a buon fine ma la creazione del record fallisce, viene effettuato un rollback eliminando il file già caricato. Viene inoltre verificato che l'utente non abbia più di tre analisi in esecuzione contemporaneamente, tale limite viene approfondito nella sezione %TODO.\\
-
-Il file viene poi convertito in \emph{Markdown}, che costituisce l’input comune per tutte le fasi successive. L'analisi del documento si divide in due rami paralleli: la validazione rule-base, che verifica il rispetto dei vincoli dimensionali definiti nel \emph{PolicyRuleset}, e l'analisi semantica condotta tramite le API di \emph{Anthropic Claude}. I risultati di entrambe vengono poi aggregati nel calcolo del quality score complessivo.\\
-
-Prima di aggiornare lo stato del documento a \texttt{COMPLETED} e notificare l'utente, viene verificato che il documento non sia stato eliminato nel frattempo. La notifica al frontend avviene tramite \emph{WebSocket}, che aggiorna la cronologia, invia una notifica di analisi conclusa e, se l'utente si trova nella pagina di caricamento, la aggiorna automaticamente.
+L'upload avviene tramite una richiesta \texttt{POST /upload} in formato \texttt{multipart/form-data}. Una volta validato e archiviato il file, viene avviata l'analisi: il documento viene convertito in \emph{Markdown} e sottoposto in sequenza ai due moduli di analisi: prima la validazione rule-based, poi l'analisi semantica tramite \emph{Anthropic Claude}. I risultati vengono aggregati nel quality score, lo stato del documento aggiornato a \texttt{COMPLETED} e l'utente notificato tramite \emph{Server-Sent Events}.
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.6\textwidth]{flow.png}
+    \includegraphics[height=0.9\textwidth]{flow.png}
     \caption{Flusso di analisi}
     \label{fig:flow}
 \end{figure}
 
-\subsection{Parsing e normalizzazione documentale}
-Una volta archiviato il file, il contenuto viene convertito in \emph{Markdown} tramite un'architettura \emph{Strategy}: in base al tipo di file ricevuto, viene selezionato il parser appropriato. I file \texttt{.md} vengono restituiti così come sono, senza alcuna trasformazione. I \texttt{.docx} e i \texttt{.pdf} richiedono invece una conversione, affrontata in modo diverso a causa delle differenze strutturali tra i due formati.
+\paragraph{Validazione del file}
+Prima di procedere viene verificata l'estensione del file: sono accettati esclusivamente i formati \texttt{.pdf}, \texttt{.docx} e \texttt{.md}; in caso contrario viene restituito un errore \texttt{400 Bad Request}.
 
-\subsubsection{Parsing di file DOCX}
+\paragraph{Multer}
+\gls{multer} è la libreria \emph{Node.js} che gestisce i dati in ingresso di tipo \texttt{multipart/form-data}, aggiungendo all'oggetto della richiesta le informazioni sul file ricevuto (\cite{site:multer}). Viene configurato con \texttt{memoryStorage}, mantenendo il file in memoria anziché scriverlo su disco, in modo da poterlo trasmettere direttamente ad \gls{amazons3} e al parser senza passaggi intermedi.
+
+\paragraph{Upload su Amazon S3}
+Una volta validato, il file viene caricato su \gls{amazons3} tramite l'\emph{AWS SDK}. La chiave con cui viene archiviato segue la struttura \texttt{documents/\{userId\}/\{timestamp\}\_\{nomeFile\}}, che garantisce l'unicità del percorso anche in caso di file con lo stesso nome caricati dallo stesso utente. Il \texttt{ContentType} viene impostato al tipo MIME del file originale. Se il caricamento va a buon fine ma la creazione del record nel database fallisce, viene effettuato un rollback eliminando il file già caricato, per mantenere la consistenza tra i dati persistiti e i file archiviati.
+
+\subsubsection{Parsing e normalizzazione documentale}
+Una volta archiviato il file, il contenuto viene convertito in \emph{Markdown} tramite un'architettura \emph{Strategy}, come previsto nel paragrafo \ref{section:parsing}: in base al tipo di file ricevuto, viene selezionato il parser appropriato. I file \texttt{.md} vengono restituiti così come sono, senza alcuna trasformazione. I \texttt{.docx} e i \texttt{.pdf} richiedono invece una conversione, affrontata in modo diverso a causa delle differenze strutturali tra i due formati.
+
+\paragraph{Parsing di file DOCX}
 I file \texttt{.docx} vengono convertiti in due fasi: prima da DOCX a HTML tramite \gls{mammoth}, poi da HTML a \emph{Markdown} tramite \gls{turndown}. Durante lo sviluppo è emerso un problema nella conversione delle tabelle: \gls{mammoth} genera HTML valido per il contenuto testuale, ma produce strutture \texttt{<table>} prive dei tag \texttt{<thead>} e \texttt{<tbody>}, che \gls{turndown} non riconosce correttamente come tabelle \emph{Markdown}. Per risolvere il problema si è intervenuti in due modi: una trasformazione preventiva sull'HTML grezzo, che individua la prima riga di ogni tabella e la racchiude in un \texttt{<thead>} esplicito, e l'adozione del plugin \texttt{turndown-plugin-gfm}. Viene inoltre aggiunta una regola per ignorare le immagini, che non sono rilevanti per l'analisi testuale.\\
 
 Il \emph{gfm} (\emph{GitHub Flavored Markdown}) è un'estensione della specifica \emph{Markdown} originale sviluppata da \emph{GitHub}, basata su \emph{CommonMark} (\cite{site:gfm}). Introduce sintassi aggiuntive non previste dallo standard, tra cui il supporto alle tabelle tramite la notazione con barre verticali. Il plugin \texttt{turndown-plugin-gfm} estende \gls{turndown} con questa specifica, permettendo di convertire correttamente le strutture \texttt{<table>} HTML in tabelle \emph{Markdown} nel formato atteso dai moduli di analisi successivi.\\
 
-\subsubsection{Parsing di file PDF}
+\paragraph{Parsing di file PDF}
 Il formato PDF rappresenta il caso più complesso. A differenza del DOCX, che contiene una struttura semantica nativa (titoli, paragrafi e tabelle sono elementi espliciti del formato), un PDF è una sequenza di istruzioni grafiche che indicano dove posizionare ogni carattere sulla pagina. Le informazioni semantiche vengono perse: estrarre il testo in modo grezzo produce un risultato disordinato, con sezioni mescolate e tabelle illeggibili.\\
 
-Identificare i titoli sarebbe stato possibile solo per approssimazione: analizzare la lunghezza delle frasi, la dimensione del font o la presenza di grassetto avrebbe richiesto di calcolare le distanze in pixel tra i caratteri, senza alcuna garanzia sul risultato. Per le tabelle il problema era ancora più complesso, richiedendo di mappare la posizione di ogni elemento grafico sulla pagina per ricostruirne la struttura. Eppure questa informazione è fondamentale per entrambi i moduli di analisi: il modulo rule-base ne ha bisogno per delimitare correttamente le sezioni, mentre il modulo AI ne ha bisogno per verificare la presenza dei capitoli obbligatori e analizzare il contenuto strutturato.\\
+Identificare i titoli sarebbe stato possibile solo per approssimazione: analizzare la lunghezza delle frasi, la dimensione del font o la presenza di grassetto avrebbe richiesto di calcolare le distanze in pixel tra i caratteri, senza alcuna garanzia sul risultato. Per le tabelle il problema era ancora più complesso, richiedendo di mappare la posizione di ogni elemento grafico sulla pagina per ricostruirne la struttura. Questa informazione è fondamentale per entrambi i moduli di analisi: il modulo rule-base ne ha bisogno per delimitare correttamente le sezioni, mentre il modulo AI ne ha bisogno per verificare la presenza dei capitoli obbligatori e analizzare il contenuto strutturato.\\
 
 La soluzione è stata \gls{docling}, una libreria open source sviluppata da \emph{IBM Research} (\cite{site:docling}) per la conversione di documenti in formati adatti all'elaborazione da parte di modelli di linguaggio. Docling tratta ogni pagina del PDF come un'immagine e applica modelli di \emph{machine learning} specializzati per riconoscerne la struttura visiva prima di estrarne il testo. A differenza dei modelli generativi, questi modelli non comprendono semanticamente il contenuto, ma riconoscono con precisione dove si trovano titoli, paragrafi, tabelle e altri elementi. I due modelli principali utilizzati sono il \emph{Layout Model}, che classifica le regioni della pagina per tipo, e \emph{TableFormer}, che a partire dalle regioni di tipo tabella ricostruisce righe, colonne e celle di intestazione.
 
 \paragraph{Integrazione con Docling:}
 Poiché il core di \gls{docling} è scritto in \emph{Python}, l'integrazione con il backend \emph{NestJS} richiede un livello intermedio. \emph{Docling Serve} è un server REST che espone via HTTP le funzionalità di \gls{docling} ed è eseguito in un container \emph{Docker} separato sulla porta \texttt{5001}. Il backend comunica con esso tramite \texttt{docling-sdk}, che si occupa di costruire le richieste HTTP, gestire i task asincroni e recuperare il risultato.\\
 
-\emph{Docling Serve} espone due meccanismi per monitorare lo stato di un task asincrono: il polling HTTP sull'endpoint \texttt{/v1/status/poll/\{taskId\}} e una connessione \emph{WebSocket} sull'endpoint \texttt{/v1/status/ws/\{taskId\}}, attraverso cui il server notifica il client al completamento dell'elaborazione. Si è scelto di adottare la modalità ibrida offerta dall'SDK (\texttt{method: 'hybrid'}), che tenta prima la connessione \emph{WebSocket} e ricade automaticamente sul polling HTTP in caso di fallimento, garantendo sia l'efficienza della connessione persistente sia la robustezza del fallback.\\
+\emph{Docling Serve} espone due meccanismi per monitorare lo stato di un task asincrono: il polling HTTP e una connessione \emph{WebSocket}, attraverso cui il server notifica il client al completamento dell'elaborazione. Si è scelto di adottare la modalità ibrida offerta dall'SDK (\texttt{method: 'hybrid'}), che tenta prima la connessione \emph{WebSocket} e ricade automaticamente sul polling HTTP in caso di fallimento, garantendo sia l'efficienza della connessione persistente sia la robustezza del fallback.\\
 
-La conversione avviene in tre fasi, il cui codice è riportato nel blocco \ref{lst:pdf_parser}. Nella prima, \texttt{convertFileAsync} invia il file tramite una richiesta \texttt{POST} multipart e restituisce immediatamente un oggetto \texttt{AsyncConversionTask} senza attendere il completamento dell'elaborazione. I principali parametri di conversione configurati sono:
+La conversione avviene in tre fasi, il cui codice è riportato nel blocco \ref{lst:pdf_parser}. 
+
+\subparagraph{1) \texttt{convertFileAsync}} invia il file tramite una richiesta \texttt{POST} multipart e restituisce immediatamente un oggetto \texttt{AsyncConversionTask} senza attendere il completamento dell'elaborazione. I principali parametri configurati sono:
 \begin{itemize}
     \item output esclusivo in \emph{Markdown};
     \item disabilitazione dell'\emph{\gls{ocr}\glsfirstoccur} poiché i PDF elaborati contengono testo selezionabile;
     \item omissione delle immagini dall'output.
 \end{itemize}
 
-Nella seconda fase, \texttt{task.waitForCompletion()} blocca l'esecuzione fino al completamento del task tramite il meccanismo ibrido configurato. Nella terza, \texttt{task.getResult()} recupera il documento convertito: il contenuto \emph{Markdown} è disponibile nel campo \texttt{document.md\_content} e viene post-processato per decodificare le entità HTML che \emph{Docling Serve} può introdurre durante la serializzazione.\\
+La disabilitazione delle immagini non è motivata solo dal risparmio di tempo ed elaborazione, ma deriva anche da un'osservazione nata durante l'implementazione: nei primi tentativi di estrazione, il modello non riusciva a comprendere correttamente il contenuto semantico delle immagini estratte, arrivando ad esempio a identificare uno \emph{use case diagram} come una semplice composizione di cerchi, senza cogliere cosa rappresentasse. Inoltre, poiché per i file \emph{DOCX} la comprensione delle immagini era già disabilitata a priori e il formato non prevede alcun meccanismo che ne descriva il contenuto, si è scelto di disabilitarla anche per i \emph{PDF} per mantenere coerenza tra i due flussi di elaborazione.
 
-Nella terza fase, \texttt{task.getResult()} recupera il documento convertito dall'endpoint \texttt{/v1/result/\{taskId\}}. Il contenuto \emph{Markdown} è disponibile nel campo \texttt{document.md\_content} e viene post-processato per decodificare le entità HTML che \emph{Docling Serve} può introdurre durante la serializzazione.
+\subparagraph{2) \texttt{task.waitForCompletion()}} blocca l'esecuzione fino al completamento del task tramite il meccanismo ibrido configurato. 
+\subparagraph{3) \texttt{task.getResult()}} recupera il documento convertito: il contenuto \emph{Markdown} è disponibile nel campo \texttt{document.md\_content} e viene post-processato per decodificare le entità HTML che \emph{Docling Serve} può introdurre durante la serializzazione.
 
 \begin{lstlisting}[label={lst:pdf_parser}]
 constructor() {
@@ -178,31 +185,457 @@ async parseToMarkdown(file: Express.Multer.File): Promise<string> {
 \end{lstlisting}
 \captionof{lstlisting}{Implementazione del PdfParserAdapter}
 
-\emph{Docling Serve} espone due meccanismi per monitorare lo stato di un task asincrono: il polling HTTP sull'endpoint \texttt{/v1/status/poll/\{taskId\}} e una connessione \emph{WebSocket} sull'endpoint \texttt{/v1/status/ws/\{taskId\}}, attraverso cui il server notifica il client al completamento dell'elaborazione. Si è scelto di adottare la modalità ibrida offerta dall'SDK (\texttt{method: 'hybrid'}), che tenta prima la connessione \emph{WebSocket} e ricade automaticamente sul polling HTTP in caso di fallimento, garantendo sia l'efficienza della connessione persistente sia la robustezza del fallback.
+\subsubsection{Analisi documentale}
+\paragraph{Validazione rule-based}
+La validazione rule-based riceve il documento in formato \emph{Markdown} e recupera dal database il \emph{PolicyRuleset} indicato per estrarne i parametri di configurazione. Le regole di lunghezza minima e massima vengono applicate a ciascuna sezione tramite il \emph{RuleRunner}, secondo l'architettura descritta nella sezione \ref{subsection:rulebase}. Per ogni sezione viene prodotto un record \texttt{RulebaseSection} che ne registra l'esito.
 
+\paragraph{Analisi semantica con Anthropic Claude}
+L'analisi semantica riceve il documento in formato \emph{Markdown} e lo invia in un'unica chiamata alle API di \emph{Anthropic Claude}. Il modello viene istruito tramite prompt a analizzare il documento sezione per sezione, restituendo un risultato strutturato per ciascuna.\\
 
+Per ogni analisi viene costruito dinamicamente un agente specializzato a partire dal \emph{PolicyRuleset} selezionato, come descritto nella sezione \ref{subsubsection:agente}. Il prompt è stato progettato per essere diretto e privo di ambiguità: le sezioni obbligatorie, le policy da rispettare e il contesto del documento vengono composti a runtime a partire dal ruleset, che può essere quello di default o uno personalizzato dall'utente. Questa scelta riduce il rischio che, in fase di configurazione di un template personalizzato, l'utente inserisca istruzioni scorrette o poco efficaci che compromettano la qualità dell'analisi.\\
 
+L'output atteso è un oggetto \emph{json} con struttura fissa, riportato nel blocco \ref{lst:ai_output}. Per ogni sezione con anomalie viene prodotto un elemento \texttt{aiSection} contenente il titolo della sezione, un array \texttt{policy} per le violazioni delle policy, un array \texttt{consistency} per le inconsistenze strutturali o di contenuto, e un campo \texttt{severity} che indica la gravità del problema. Le sezioni prive di errori non vengono incluse nell'output; le sezioni obbligatorie assenti vengono elencate nell'array \texttt{missingSections}.
 
+\begin{lstlisting}[label={lst:ai_output}]
+{
+  "aiSections": [
+    {
+      "titleSection": "nome della sezione",
+      "policy": [
+        "nome dell'errore",
+        "suggerimento sintetico",
+        "causa del problema"
+      ],
+      "consistency": [
+        "nome dell'errore",
+        "suggerimento sintetico",
+        "causa del problema"
+      ],
+      "severity": "Bassa" | "Media" | "Grave"
+    }
+  ],
+  "missingSections": ["sezione mancante"]
+}
+\end{lstlisting}
+\captionof{lstlisting}{Formato di output atteso dall'analisi AI}
 
-\subsection{Upload del documento}
+\subsubsection{Quality score}
+Al termine delle due analisi viene calcolato un punteggio di qualità complessivo, articolato in tre aree, ciascuna con un valore compreso tra 0 e 100.
 
-\subsection{Validazione con Multer}
-\subsection{Upload su Amazon S3}
-\subsection{Parsing}
-\subsection{Analisi docuemntale}
-\subsubsection{Rule-base}
-\subsubsection{Anthropic Claude}
-\subsection{Quality score}
-\subsection{Aggiornamento dello stato}
-\subsection{Invio di WebSocket}
+\begin{itemize}
+  \item \texttt{qualityScoreMissingSections}: misura la presenza delle sezioni obbligatorie tramite il rapporto tra le sezioni presenti e quelle richieste dal ruleset. Se il ruleset non prevede sezioni obbligatorie il punteggio è 100.
+  \item \texttt{qualityScoreLengthSections}: misura il rispetto dei vincoli dimensionali tramite il rapporto tra le sezioni che hanno superato la validazione rule-based e il totale delle sezioni analizzate. Se il documento è vuoto il punteggio è 0; se non sono presenti sezioni da validare è 100.
+  \item \texttt{qualityScoreConsistence}: misura la qualità semantica del contenuto applicando una penalità per ogni errore rilevato dall'analisi AI, pesata in base alla severità: \texttt{Grave} (1.6), \texttt{Media} (0.6) e \texttt{Bassa} (0.3). Più errori sono presenti nella stessa sezione, maggiore è la penalità per effetto di un moltiplicatore progressivo. La penalità viene normalizzata sul numero di sezioni analizzate e sottratta da 100, con un minimo di 0. Se tutte le sezioni obbligatorie risultano mancanti il punteggio è direttamente 0. Il codice di questo \emph{score} è riportato nel blocco \ref{lst:score_cons}
 
+  \begin{lstlisting}[label={lst:score_cons}]
+  private scoreConsistence(sections: AiSection[], missingSections: string[], requiredSections: string[]): number {
+    if (requiredSections.length > 0 && missingSections.length === requiredSections.length) return 0;
 
-\subsection{Gestione degli errori}
+    const severityWeights: Record<Severity, number> = {
+        Grave: 1.6,
+        Media: 0.6,
+        Bassa: 0.3,
+        '-': 0,
+    };
+
+    let totalPenalty = 0;
+
+    for (const section of sections) {
+        const errors = [...(section.policy ?? []), ...(section.consistency ?? [])];
+        const severityWeight = severityWeights[section.severity ?? '-'];
+        errors.forEach((_, index) => {
+        const repetitionPenalty = 1 + index * 0.25;
+        totalPenalty += severityWeight * repetitionPenalty;
+        });
+    }
+
+    if (requiredSections.length > 0) {
+        const missingRatio = missingSections.length / requiredSections.length;
+        totalPenalty += missingRatio * 10;
+    }
+
+    const base = sections.length + missingSections.length;
+    const normalized = totalPenalty / Math.max(base, 1);
+    const score = 100 - normalized * 15;
+    return Math.max(0, Number(score.toFixed(2)));
+  }
+  \end{lstlisting}
+  \captionof{lstlisting}{Calcolo score consistency}
+
+\end{itemize}
+
+I tre punteggi vengono salvati nel record \texttt{AnalysisReport}.
+
+\subsubsection{Aggiornamento dello stato e notifica}
+\label{subsection:notifica}
+Una volta calcolato il quality score, lo stato del documento viene aggiornato a \texttt{COMPLETED}. Prima di procedere viene verificato che il documento non sia stato eliminato nel frattempo: se non è più presente nel database l'intera operazione viene interrotta senza propagare errori. La stessa verifica viene effettuata in caso di errore durante l'analisi, aggiornando in quel caso lo stato a \texttt{ERROR}.\\
+
+La notifica al frontend avviene tramite \emph{Server-Sent Events}(\emph{\gls{sse}\glsfirstoccur}), una tecnologia che permette al server di inviare eventi al client tramite una connessione HTTP unidirezionale e persistente. L'utente autenticato apre la connessione verso l'endpoint SSE protetto da \emph{guard}, autenticandosi tramite il proprio \emph{token} \gls{jwt}. Una volta stabilita la connessione, il server può notificare l'utente al completamento dell'analisi. Alla ricezione dell'evento il frontend aggiorna la cronologia dei documenti, mostra una notifica di analisi conclusa e, se l'utente si trova nella pagina di caricamento, la aggiorna automaticamente.\\
+
+La scelta di \emph{Server-Sent Events} rispetto ai \emph{WebSocket} è motivata dal fatto che la comunicazione sia unidirezionale: il server deve notificare il client al completamento dell'analisi, senza che il client debba inviare messaggi in risposta. SSE si appoggia a una connessione HTTP persistente, risultando più semplice da implementare rispetto al protocollo WebSocket, che introduce una connessione bidirezionale non necessaria per questo caso d'uso. Sul \emph{frontend}, la connessione non viene stabilita tramite l'\emph{API} nativa \texttt{EventSource}, poiché questa non consente di allegare \emph{header} personalizzati alla richiesta e quindi non permette di trasmettere il \emph{token} \gls{jwt} per l'autenticazione. Si utilizza invece una richiesta \texttt{fetch} standard verso l'endpoint SSE, con il \emph{token} allegato nell'\emph{header} \texttt{Authorization}, leggendo poi lo \emph{stream} di risposta manualmente tramite un \texttt{ReadableStream}.
+
+\subsection{Template personalizzati}
+La piattaforma prevede un sistema di template, chiamati \emph{PolicyRuleset}, che definiscono le regole e il contesto da applicare durante l'analisi di un documento. Ogni template è associato a un utente tramite il campo \texttt{userId}: se questo campo è assente, il template viene considerato di default e reso disponibile a tutti gli utenti della piattaforma senza possibilità di modifica o eliminazione.\\
+
+Gli utenti possono creare, modificare ed eliminare i propri template personalizzati. I campi configurabili sono: il nome, una descrizione, il contesto, le sezioni obbligatorie, le policy da rispettare e i limiti dimensionali delle sezioni. Il campo più rilevante è \texttt{context}, che definisce il dominio applicativo del documento e orienta il comportamento dell'agente AI durante l'analisi semantica.\\
+
+In fase di creazione, i campi vengono sanitizzati per prevenire l'inserimento di HTML arbitrario e troncati a una lunghezza massima. Se esiste già un template con lo stesso nome, viene aggiunto automaticamente un suffisso numerico progressivo per evitare confusione.\\
+
+È inoltre possibile esportare un template in formato \emph{json} e importarne uno da file. Questa funzionalità permette di condividere configurazioni utili tra utenti, senza dover creare un template riempiendo tutti i campi del form.
+
+\subsection{Report di analisi}
+Al termine dell'analisi, i risultati vengono esposti tramite un endpoint dedicato che aggrega i dati prodotti dai due moduli in un \texttt{AnalysisReportDTO}, composto a sua volta dai DTO annidati \texttt{RulebaseSectionDTO} e \texttt{AiReportDTO}, riportati nel blocco \ref{lst:report_view}. Il report restituito contiene: i tre punteggi di qualità, i risultati della validazione rule-based per ciascuna sezione, il report AI con le sezioni analizzate e le eventuali anomalie rilevate, i limiti dimensionali definiti dal ruleset, lo stato dell'analisi e la data di creazione.\\
+
+\begin{lstlisting}[label={lst:report_view}]
+  class AnalysisReportDTO {
+    _id: string;
+    qualityScoreMissingSections: number;
+    qualityScoreLengthSections: number;
+    qualityScoreConsistence: number;
+    rulebaseSections: RulebaseSectionDTO[];
+    createdAt: Date;
+    minSectionsLimit: number;
+    maxSectionsLimit: number;
+    status: AnalysisReportStatus;
+    aiReport: AiReportDTO | null;
+    templateDeleted: boolean;
+  }
+
+  class RulebaseSectionDTO {
+    sectionTitle: string;
+    passed: boolean;
+  }
+
+  class AiReportDTO {
+    id: string;
+    missingSections: string[];
+    sections: {
+      titleSection: string;
+      policy: string[];
+      consistency: string[];
+      severity: string;
+    }[];
+  }
+\end{lstlisting}
+\captionof{lstlisting}{Report visualizzato}
+\vspace{0.5cm}
+
+Durante l'elaborazione dell'analisi, che nel caso di documenti PDF può richiedere diversi minuti, l'utente ha accesso a una pagina di caricamento che mostra le informazioni principali del documento e le sezioni obbligatorie previste dal template selezionato. Questo evita che l'utente percepisca il sistema come bloccato in attesa del completamento dell'analisi.\\
+
+Ad analisi conclusa è possibile scaricare il file originale direttamente da \emph{S3} tramite un URL firmato, ovvero un URL che include una firma crittografica generata dal server, che autorizza l'accesso temporaneo a una risorsa privata senza richiedere credenziali.\\
+
+Se l'analisi si è conclusa con successo, è possibile esportare il report, già visibile sulla pagina web, in due formati: \emph{json} e \emph{PDF}.
+
+\subsection{Criticità e scelte implementative}
+Lo sviluppo ha evidenziato alcune problematiche non previste in fase di progettazione, legate principalmente alla gestione delle risorse, alla consistenza dei dati e ai limiti delle librerie adottate. Per ciascuna di esse si è individuata una soluzione compatibile con i vincoli del sistema.
+
+\subsubsection{Interruzione dell'analisi e limite di concorrenza}
+\label{subsection:interruzione_analisi}
+Dato che l'analisi di un documento PDF può richiedere diversi minuti (\gls{docling} impiega mediamente tra i 2 e i 7 secondi per pagina) si è valutata la possibilità di consentire all'utente di interrompere un'analisi in corso. Questa opzione è praticabile per le chiamate ad \emph{Anthropic Claude}, che espongono un meccanismo di interruzione, ma non per \emph{Docling Serve}: l'SDK non espone alcun metodo per annullare un task avviato e l'unico modo per interrompere l'elaborazione sarebbe abbattere il container \emph{Docker}. Ignorare semplicemente il risultato non sarebbe una soluzione accettabile: il container continuerebbe a consumare memoria per portare a termine un'analisi il cui esito verrebbe scartato.\\
+
+Per questo motivo si è scelto di non esporre la funzionalità di interruzione e di limitare invece il numero di analisi eseguibili contemporaneamente a tre per utente. Questo vincolo riduce l'incentivo ad avviare analisi in modo indiscriminato e contiene il consumo di risorse in caso di utilizzo concorrente. \\
+
+per evitare che un utente con un'analisi in corso possa eliminarla manualmente, aggirandosi così il limite di tre analisi concorrenti, la cancellazione di documenti con stato \texttt{PROCESSING} o \texttt{PENDING} è stata vietata.
+
+\subsubsection{Comunicazione con Anthropic Claude}
+Nella fase di progettazione si era valutata la possibilità di gestire la chiamata ad \emph{Anthropic Claude} in modo asincrono, restituendo immediatamente una risposta al client e notificando il completamento in un secondo momento: con documenti di grandi dimensioni, una richiesta \emph{HTTP} sincrona avrebbe potuto richiedere tempi prolungati, con il rischio che la connessione venisse interrotta prima di ricevere la risposta. Tuttavia, dalle prove effettuate anche su documenti di dimensioni significative, l'analisi ha richiesto costantemente meno di un minuto. Si è quindi ritenuto sufficiente un semplice \texttt{await} sulla chiamata, evitando la complessità aggiuntiva di una gestione asincrona non necessaria.
+
+\subsubsection{Eliminazione di un utente durante un'analisi}
+Gli amministratori hanno la possibilità di eliminare un utente dalla piattaforma. Se l'utente ha un'analisi in corso al momento dell'eliminazione, il tentativo di aggiornare lo stato del documento al termine dell'elaborazione fallirebbe, poiché non esisterebbe più alcun utente a cui associarlo. Per questo motivo, sebbene la cancellazione di documenti con stato \texttt{PROCESSING} o \texttt{PENDING} sia vietata, un amministratore deve poter essere in grado di eliminare un utente, senza dover attendere la conclusione di un'analisi: viene impostato un \emph{flag} \texttt{force} a \texttt{true}, che consente l'eliminazione del documento e del relativo \texttt{AnalysisReport} anche se l'analisi è ancora in corso. Poiché non è possibile interrompere un'analisi già avviata, le sezioni del report generate dall'elaborazione restano temporaneamente nel database. Prima di notificare all'utente il completamento dell'analisi e di aggiornare lo stato a \texttt{COMPLETED}, viene verificato che il documento esista ancora: se è stato eliminato nel frattempo, l'operazione viene interrotta, come descritto nella sezione \ref{subsection:notifica} e tutte le occorrenze residue legate al documento vengono eliminate.\\
+
+\subsubsection{Eliminazione di un template}
+La gestione dei template personalizzati non era prevista nella prima fase di progettazione, trattandosi di un requisito opzionale individuato in seguito. Tuttavia, nel momento in cui si offre la possibilità di creare un'entità, è necessario garantire anche le operazioni di modifica ed eliminazione, per coerenza con il principio CRUD.\\
+
+Poiché ogni analisi è associata a un template, l'eliminazione di quest'ultimo avrebbe dovuto comportare un'alterazione dell'analisi già effettuata. Eliminare a cascata anche l'analisi non era una soluzione accettabile: una volta conclusa, i dati restano salvati nel database indipendentemente dalla disponibilità del template, ed eliminarli solo per via di un riferimento non più valido avrebbe rappresentato uno spreco. Si è quindi valutato di impostare il campo a \texttt{null} al momento dell'eliminazione del template, ma trattandosi di un database non relazionale, questa gestione avrebbe richiesto un intervento manuale. Ogni entità è gestita all'interno di un modulo separato e poiché \texttt{AnalysisReport} dipende già da \texttt{PolicyRuleset}, impostare un annullamento a cascata del campo (o l'eliminazione dell'analisi) al momento della cancellazione del template avrebbe richiesto un riferimento inverso da \texttt{PolicyRuleset} ad \texttt{AnalysisReport}, generando una dipendenza circolare tra i due moduli.\\
+
+La soluzione adottata è stata quindi una \emph{soft delete}: ai template è stato aggiunto un campo booleano \texttt{deleted}, impostato a \texttt{false} alla creazione e a \texttt{true} al momento dell'eliminazione. Questo approccio non introduce alcuna dipendenza di \texttt{PolicyRuleset} verso \texttt{AnalysisReport}, e l'accesso o il riutilizzo di template eliminati è stato vietato. Il vantaggio principale è che il \emph{frontend} può continuare a mostrare il nome del template utilizzato, permettendo di riconoscere il contesto dell'analisi, e i relativi limiti dimensionali (minimo e massimo delle sezioni), ma non può accedere alle specifiche complete del template eliminato.
+
+\subsubsection{Eliminazione a cascata}
+\emph{MongoDB} è un database non relazionale e non supporta nativamente i vincoli di integrità referenziale né le eliminazioni a cascata. Una soluzione alternativa sarebbe stata l'uso dei middleware di \emph{Mongoose} (pre e post hook), che permettono di agganciare logica alle operazioni di eliminazione a livello di schema. Tuttavia, nel contesto di \emph{NestJS} con moduli separati, i hook smettono di funzionare correttamente quando lo schema deve referenziare model dichiarati in altri moduli, rendendo questa strada non praticabile per gestire eliminazioni che coinvolgono collezioni diverse. Si è quindi gestita l'eliminazione a cascata manualmente. All'eliminazione di un utente vengono rimossi tutti i suoi documenti e i suoi template; all'eliminazione di un documento vengono rimossi il file da \emph{S3}, il report di analisi associato e, a cascata, tutte le sezioni rule-based e AI collegate.
+
+\subsubsection{Gestione dello shutdown}
+In caso di arresto del server, i documenti con stato \texttt{PENDING} o \texttt{PROCESSING} rimarrebbero bloccati indefinitamente, poiché l'analisi in corso non verrebbe mai completata. Per gestire questo caso, il service implementa i lifecycle hook \texttt{onApplicationBootstrap} e \texttt{onApplicationShutdown} offerti da \emph{NestJS}: il primo viene eseguito all'avvio dell'applicazione, per gestire eventuali documenti rimasti in stato inconsistente a seguito di un arresto anomalo precedente; il secondo viene eseguito alla ricezione del segnale di shutdown. In entrambi i casi, i documenti interessati vengono marcati come \texttt{ERROR} e i dati di analisi parziali già prodotti vengono eliminati, ripristinando uno stato consistente.
 
 \section{Frontend}
-\subsection{Organizzazione repository}
-\subsection{Componenti principali}
-\subsection{Gestione dello stato}
+Il \emph{frontend} comunica con il \emph{backend} esclusivamente tramite richieste \emph{HTTP} verso le \emph{API REST} esposte da \emph{NestJS}. All'interno di ciascuna \emph{feature}, le chiamate verso il \emph{backend} sono isolate in file dedicati (\texttt{*.service.ts}), separando la responsabilità di costruzione delle richieste dai componenti React.\\
+
+I \emph{service} non vengono invocati direttamente dai componenti, ma tramite \emph{hook} personalizzati che racchiudono la chiamata al \emph{service} insieme alla gestione dello stato di caricamento, dell'eventuale errore e del dato recuperato. Questo livello di indirizzamento permette ai componenti di rimanere semplici, limitandosi a invocare l'\emph{hook} e a utilizzarne il risultato.\\
+
+Ogni \emph{hook} gestisce in autonomia il proprio stato locale (tramite \texttt{useState}), che viene poi passato ai componenti tramite \emph{props}.
+
+\subsection{Autenticazione}
+Il sistema di autenticazione era già implementato nel \emph{boilerplate} fornito dall'azienda, basato su \emph{AWS Cognito}. Il flusso prevede che, al primo accesso, l'utente riceva via email un codice temporaneo: inserendolo, viene reindirizzato a una schermata di cambio password obbligatorio (immagine \ref{fig:nuova-pw}) prima di poter accedere effettivamente alla piattaforma. È inoltre presente un flusso di recupero password (immagine \ref{fig:recupero-pw}) per gli utenti che hanno dimenticato le proprie credenziali.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=1\textwidth]{frontend/nuova-pw}
+    \caption{Nuova password}
+    \label{fig:nuova-pw}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{frontend/recupero-pw}
+    \caption{Recupero password}
+    \label{fig:recupero-pw}
+\end{figure}
+
+La pagina di \emph{login} presenta una breve presentazione del flusso applicativo, come si può vedere nell'immagine \ref{fig:login} (caricamento del documento, scelta del template, attesa dell'analisi, consultazione ed esportazione del report), con l'obiettivo di comunicare il valore del prodotto e invogliare l'utente all'utilizzo, un approccio di \emph{design emozionale} basato sull'anticipazione. Le scelte adottate per garantirne l'accessibilità sono discusse nella sezione~\ref{subsubsection:mitigazioni}.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=1\textwidth]{frontend/login}
+    \caption{Pagina di login}
+    \label{fig:login}
+\end{figure}
+
+\subsection{Caricamento e analisi di un documento}
+Il flusso di analisi è composto da tre fasi, gestite dal componente \texttt{StartAnalysis}: 
+\begin{itemize}
+  \item Il caricamento del file,
+  \item La selezione del template,
+  \item L'attesa del completamento dell'elaborazione.
+\end{itemize}
+
+\subsubsection{Caricamento del documento}
+La prima fase consiste nel caricamento del file da analizzare (immagine \ref{fig:new-doc}), tramite un'area di \emph{drag} \& \emph{drop} (\texttt{FileDropzone}) che accetta anche la selezione manuale del file dal \emph{filesystem}. Sono supportati i formati \emph{PDF}, \emph{DOCX} e \emph{Markdown}, con un limite di dimensione di \texttt{20MB}; il controllo del formato viene effettuato sia sul \emph{MIME type} che sull'estensione del file, per gestire correttamente i casi in cui il browser non riconosce correttamente il tipo \emph{MIME} di un file. In caso di file non valido o troppo grande, viene mostrato un messaggio di errore puntuale, mentre la selezione di un file valido abilita il pulsante per proseguire alla fase successiva.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=1\textwidth]{frontend/new-doc}
+    \caption{Caricamento documento}
+    \label{fig:new-doc}
+\end{figure}
+
+Per evitare un consumo eccessivo di risorse, come spiegato nella sezione \ref{subsection:interruzione_analisi}; il numero di analisi eseguibili contemporaneamente dallo stesso utente è limitato a tre: se il limite è già stato raggiunto, l'area di caricamento viene disabilitata e viene mostrato un messaggio che ne esprime la motivazione.
+
+\subsubsection{Selezione del template}
+Una volta selezionato il file, l'utente sceglie il template più adatto tra quelli disponibili (\texttt{SelectTemplate} immagine \ref{fig:select-template}), filtrabili tramite una barra di ricerca che confronta il termine inserito con il nome e la descrizione di ciascun template. La selezione avviene tramite un gruppo di \emph{radio button}, e il pulsante di avvio dell'analisi resta disabilitato finché non viene scelto un template. Alla conferma, il documento viene inviato al \emph{backend} tramite l'\emph{hook} \texttt{useUploadDocument}; in caso di successo, l'utente viene reindirizzato alla pagina di dettaglio del documento appena creato, dove si attente che l'elaborazione venga completata.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=1\textwidth]{frontend/select-template}
+    \caption{Selezione del template}
+    \label{fig:select-template}
+\end{figure}
+
+\subsubsection{Attesa del completamento}
+Durante l'elaborazione del documento, il componente \texttt{ProcessingAnalysis} (immagine \ref{fig:processing}) mostra un'animazione che elenca progressivamente le sezioni richieste dal template selezionato, per comunicare all'utente che l'analisi è in corso. Si tratta di un effetto puramente decorativo, che non riflette l'avanzamento reale dell'elaborazione (di cui il \emph{frontend} non ha visibilità, essendo l'elaborazione gestita in modo asincrono lato \emph{backend}), ma che ha lo scopo di mantenere l'attenzione dell'utente durante l'attesa. Per questo motivo, e poiché ha valore puramente estetico, l'elenco è marcato con l'attributo \texttt{aria-hidden} per essere ignorato dagli \emph{screen reader}.\\
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=1\textwidth]{frontend/processing}
+    \caption{Attesa del completamento}
+    \label{fig:processing}
+\end{figure}
+
+Al completamento dell'analisi, la notifica arriva tramite il meccanismo di \emph{Server-Sent Events} descritto nella sezione~\ref{subsection:notifica}: la cronologia dei documenti viene aggiornata, la pagina corrente viene aggiornata automaticamente se l'utente si trova ancora sul documento in analisi e viene mostrata una notifica di conferma.
+
+\newpage
+
+\subsection{Visualizzazione del report di analisi}
+Una volta completata l'elaborazione, il documento analizzato viene mostrato in un'unica vista che affianca l'anteprima del file originale al report generato (componente \texttt{ReportAnalysis}). L'anteprima si adatta al formato del documento caricato: per i file \emph{PDF} viene mostrato il visualizzatore nativo del browser (figura \ref{fig:pdf}), per i file \emph{DOCX} viene generata una rappresentazione renderizzata del contenuto (figura \ref{fig:docx}), mentre per i file \emph{Markdown} il testo viene mostrato formattato secondo la sua sintassi (figura \ref{fig:md}). Il componente \texttt{FilePreview} instrada la richiesta al sotto-componente corretto in base al tipo di file, riportato nel blocco \ref{lst:preview},. 
+
+\begin{lstlisting}[label={lst:preview}]
+export const FilePreview = ({ id, fileType }: FilePreviewProps) => {
+    if (fileType === FileType.PDF) {
+        return <PdfPreview id={id}/>;
+    }
+    if (fileType === FileType.MD) {
+    return <MarkdownPreview id={id} />;
+    }
+    if (fileType === FileType.DOCX) {
+    return <DocxPreview id={id} />;
+    }
+    return <p>Formato non supportato</p>;
+};
+\end{lstlisting}
+\captionof{lstlisting}{Frontend: FilePreview}
+
+\begin{figure}[h]
+\begin{adjustwidth}{-1.5cm}{-1.5cm}
+    \centering
+    \begin{minipage}{0.4\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{frontend/pdf}
+        \captionof{figure}{Preview PDF}
+        \label{fig:pdf}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.4\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{frontend/docx}
+        \captionof{figure}{Preview DOCX}
+        \label{fig:docx}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.4\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{frontend/md}
+        \captionof{figure}{Preview MD}
+        \label{fig:md}
+    \end{minipage}
+\end{adjustwidth}
+\end{figure}
+
+Il riquadro dell'anteprima può essere ridotto o espanso dall'utente, e il documento originale può essere scaricato in qualsiasi momento.\\
+
+A fianco dell'anteprima viene mostrato il report, strutturato in tre indicatori percentuali: sezioni mancanti, rispetto dei limiti di lunghezza e consistenza/policy; riassunti in un punteggio complessivo circolare. Di seguito vengono illustrati tre casi rappresentativi, scelti per mostrare il comportamento del sistema agli estremi e in condizioni intermedie.
+
+\subsubsection{Documento conforme}
+Nel caso di un documento che rispetta integralmente la struttura richiesta dal template selezionato (figura \ref{fig:perfect}), tutti e tre gli indicatori raggiungono il 100\%, e il punteggio complessivo è la media di tutti. In questo caso il report non elenca alcun problema, e per ciascun indicatore viene mostrato un messaggio di conferma (\emph{"Tutte le sezioni sono presenti"}, \emph{"Tutte le sezioni rispettano i limiti di lunghezza"}, \emph{"Il contenuto non presenta incoerenze"}).
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.4\textwidth]{frontend/perfect}
+    \caption{Documento perfetto}
+    \label{fig:perfect}
+\end{figure}
+
+\newpage
+\subsubsection{Documento vuoto}
+Caricando un file privo di contenuto (figura \ref{fig:vuoto}), tutti gli indicatori scendono a 0\%. Il report elenca per intero le sezioni previste dal template come mancanti, e nella sezione dedicata alla coerenza contenutistica viene segnalato un singolo errore di gravità grave, con motivazione \emph{"il documento è completamente privo di contenuto"} (figura \ref{fig:vuoto_consistency}).
+
+\begin{figure}[h]
+    \centering
+    \begin{minipage}{0.4\textwidth}
+        \includegraphics[width=\textwidth]{frontend/vuoto}
+        \captionof{figure}{File vuoto: score}
+        \label{fig:vuoto}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.5\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{frontend/vuoto_consistency}
+        \captionof{figure}{File vuoto: consistency }
+        \label{fig:vuoto_consistency}
+    \end{minipage}
+\end{figure}
+
+\subsubsection{Documento con qualità media}
+Un documento che rispetta solo parzialmente la struttura e i criteri del template (figura \ref{fig:report}) produce un punteggio intermedio. Nel report vengono segnalati i punti in cui manca coerenza contenutistica o viola le policy stabilite (figura \ref{fig:report_consistency}).
+
+\begin{figure}[h]
+    \centering
+    \begin{minipage}{0.5\textwidth}
+        \includegraphics[width=\textwidth]{frontend/report}
+        \captionof{figure}{Score medio}
+        \label{fig:report}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.4\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{frontend/report-consistency}
+        \captionof{figure}{Report consistency}
+        \label{fig:report_consistency}
+    \end{minipage}
+\end{figure}
+
+\paragraph{Cerca documento}
+\subsubsection{Template}
+\paragraph{Gestione templates}
+\paragraph{Importa templates}
+\paragraph{Esplora templates}
+\subsubsection{Gestione utenti}
+
+\subsection{Componenti riutilizzabili}
+\subsection{Validazione dei form}
+
+\subsection{Accessibilità}
+L'accessibilità non era un requisito del progetto, ma durante la progettazione del \emph{frontend} si è cercato comunque di tenerne conto, richiamando a quanto studiato in precedenza. Le scelte descritte in questa sezione non seguono quindi una verifica completa secondo i quattro principi delle \emph{WCAG} (\emph{Percepibile}, \emph{Utilizzabile}, \emph{Comprensibile}, \emph{Robusto}), ma sono accorgimenti applicati nel corso dello sviluppo, anche in base ai limiti delle tecnologie, del tempo e degli strumenti usati. Trattandosi di un'applicazione pensata per essere utilizzata principalmente da \emph{desktop}, non si è tenuto conto dell'accessibilità su dispositivi mobili o per schermi sotto i \texttt{1200px}, oltre al fatto che non era comunque un requisito del progetto.
+
+\subsubsection{Navigazione da tastiera}
+L'applicazione è navigabile interamente da tastiera. All'inizio della barra di navigazione laterale è presente un collegamento \emph{"salta al contenuto principale"}, che permette di evitare la singola lettura di ogni voce nella barra di navigazione. Mentre un secondo collegamento equivalente \emph{"Vai allo storico documenti"} è posizionato immediatamente dopo il precedente. Infine è presente un ultimo collegamento posto prima dell'inizio della cronologia dei documenti, che permette di navigare al contenuto principale.\\
+
+Una limitazione riguarda la voce di navigazione corrispondente alla pagina corrente: utilizzando il componente \texttt{NavLink} di \emph{React Router}, non è stato possibile rimuovere il collegamento circolare verso la pagina attualmente visualizzata, che rimane quindi raggiungibile da tastiera anche se porta alla stessa pagina già in uso.\\
+
+Per rendere evidente la posizione del focus durante la navigazione da tastiera, è stato applicato uno stile che evidenzia con un bordo rosso l'elemento che presenta il focus, limitatamente agli elementi interattivi (link, pulsanti), in modo da attirare l'attenzione dell'utente sull'elemento correntemente selezionato.
+
+\subsubsection{Font}
+L'applicazione utilizza il font di sistema del dispositivo dell'utente, garantendo coerenza visiva con il resto del sistema operativo e beneficiando delle eventuali impostazioni di accessibilità già configurate dall'utente a livello di sistema (dimensione, spaziatura, eventuali font sostitutivi per dislessia).\\
+
+Nell'applicazione web è utilizzato un secondo font, \emph{Fira Code}, impiegato per riconoscere aree di input, l'anteprima del codice nel caso di file \emph{Markdown}, e alcuni dettagli decorativi che richiamano un tema tecnico (come il link al template utilizzato o lo stato di un'analisi). Poiché questi elementi si trovano sempre al di fuori dei campi di testo libero, non si avverte il rischio che l'utente percepisca confusione tra contenuto testuale e contenuto interattivo.\\
+
+\emph{Fira Code} è generalmente raccomandato per la lettura di codice da parte di utenti con dislessia~\cite{site:firacode}. Tra gli aspetti rilevanti dal punto di vista dell'accessibilità, il font distingue chiaramente:
+\begin{itemize}
+  \item l'apertura delle lettere (e, c, a);
+  \item le legature tra caratteri (qp, db, rn);
+  \item la differenza tra lettere simili (iIl1, oO0);
+  \item la spaziatura tra parole.
+\end{itemize}
+Tali verifiche sono riportane nell'immagine \ref{fig:font}.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.7\textwidth]{frontend/font}
+    \caption{Font Fira Code}
+    \label{fig:font}
+\end{figure}
+
+\subsubsection{Verifica con NVDA}
+\emph{NVDA} (\emph{NonVisual Desktop Access}) è uno \emph{screen reader} gratuito e open source per Windows, sviluppato da \emph{NV Access}, ampiamente utilizzato sia da utenti non vedenti o ipovedenti per l'uso quotidiano del computer, sia da sviluppatori e professionisti dell'accessibilità per testare la fruibilità delle applicazioni web tramite tecnologie assistive (\cite{site:nvda}). \\
+
+Per verificare la corretta comprensione del contenuto dell'applicazione tramite tecnologie assistive, ogni pagina è stata testata con \emph{NVDA} (\emph{NonVisual Desktop Access}), uno \emph{screen reader} gratuito per Windows. La verifica ha permesso di controllare che:
+\begin{itemize}
+  \item Gli elementi interattivi fossero annunciati correttamente,
+  \item Vocaboli di lingua straniera fossero letti con la giusta intonazione,
+  \item Le etichette dei campi di input fossero associate in modo coerente,
+  \item I vari elementi del contenuto risultassero comprensibili tramite il solo udito.
+\end{itemize}
+
+\subsubsection{Verifica con Silktide}
+\emph{Silktide Accessibility Checker} è un'estensione gratuita per Chrome ed Edge che permette di analizzare una pagina web rispetto controlli basati sulle linee guida \emph{WCAG}, fornendo un report con i problemi rilevati e indicazioni per la loro risoluzione; lo strumento include inoltre un simulatore di disabilità visive e un verificatore di contrasto cromatico (\cite{site:silktide}). \\
+
+È stata utilizzata l'estensione \emph{Silktide Accessibility Checker} per Chrome, che ha permesso di verificare la corretta gerarchia delle intestazioni (\texttt{h1}–\texttt{h6}) in ciascuna pagina, individuando eventuali salti di livello o intestazioni mancanti, oltre a segnalare elementi con markup \emph{HTML} non semanticamente corretto o privi di attributi necessari per le tecnologie assistive.
+
+\subsubsection{Palette di colori}
+\emph{Silktide} è stato utilizzato anche per verificare il contrasto tra testo e sfondo delle combinazioni di colori adottate. I risultati sono riportati nella tabella~\ref{tab:contrasti}.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|l|l|l|}
+\hline
+\rowcolor{headergreen}
+\textcolor{white}{\textbf{Colore 1}} & \textcolor{white}{\textbf{Colore 2}} & \textcolor{white}{\textbf{Contrasto}} & \textcolor{white}{\textbf{Accessibilità}} \\
+\hline
+\colorswatch{141D2E} Testo (\texttt{\#141D2E}) & \colorswatch{F7FEF9} Sfondo (\texttt{\#F7FEF9}) & 16{,}47:1 & AA e AAA \\
+\colorswatch{141D2E} Testo (\texttt{\#141D2E}) & \colorswatch{C7D8D7} Sfondo scuro (\texttt{\#C7D8D7}) & 11{,}43:1 & AA e AAA \\
+\colorswatch{294C9B} Link e Pulsanti (\texttt{\#294C9B}) & \colorswatch{F7FEF9} Sfondo (\texttt{\#F7FEF9}) & 7{,}88:1 & AA e AAA \\
+\colorswatch{294C9B} Link e Pulsanti (\texttt{\#294C9B}) & \colorswatch{C7D8D7} Sfondo scuro(\texttt{\#C7D8D7}) & 5{,}47:1 & AA \\
+\colorswatch{F7FEF9} Footer (\texttt{\#F7FEF9}) & \colorswatch{141D2E} Sfondo footer (\texttt{\#141D2E}) & 16{,}47:1 & AA e AAA \\
+\colorswatch{465879} Note (\texttt{\#465879}) & \colorswatch{F7FEF9} Sfondo (\texttt{\#F7FEF9}) & 6{,}99:1 & AA \\
+\colorswatch{CE0C0C} Errore (\texttt{\#9E1111}) & \colorswatch{F7FEF9} Sfondo (\texttt{\#F7FEF9}) & 8{,}06:1 & AA e AAA \\
+\colorswatch{CE0C0C} Errore (\texttt{\#9E1111}) & \colorswatch{C7D8D7} Sfondo scuro (\texttt{\#C7D8D7}) & 5{,}60:1 & AA \\
+
+\colorswatch{141D2E} Testo (\texttt{\#141D2E}) & \colorswatch{F1CFCC} Report grave (\texttt{\#F1CFCC}) & 11{,}68:1 & AA e AAA \\
+\colorswatch{141D2E} Testo (\texttt{\#141D2E}) & \colorswatch{EDACAA} Header grave (\texttt{\#EDACAA}) & 8{,}90:1 & AA e AAA \\
+\colorswatch{141D2E} Testo (\texttt{\#141D2E}) & \colorswatch{F5E6C4} Report grave (\texttt{\#F5E6C4}) & 13{,}65:1 & AA e AAA \\
+\colorswatch{141D2E} Testo (\texttt{\#141D2E}) & \colorswatch{F4D59C} Header medio (\texttt{\#F4D59C}) & 11{,}92:1 & AA e AAA \\
+\colorswatch{141D2E} Testo (\texttt{\#141D2E}) & \colorswatch{F2F9C4} Report basso (\texttt{\#F2F9C4}) & 15{,}36:1 & AA e AAA \\
+\colorswatch{141D2E} Testo (\texttt{\#141D2E}) & \colorswatch{EDF59B} Header basso (\texttt{\#EDF59B}) & 14{,}57:1 & AA e AAA \\
+\hline
+\end{tabular}
+\caption{Verifiche di contrasto colori tramite Silktide.}
+\label{tab:contrasti}
+\end{table}
+
+\subsubsection{Ulteriori accorgimenti}
+Oltre alle misure descritte nelle sezioni precedenti, sono stati adottati ulteriori accorgimenti minori, che contribuiscono all'accessibilità complessiva dell'applicazione:
+
+\begin{itemize}
+    \item la dimensione minima del testo nell'interfaccia è di \texttt{14px}, soglia che non viene superata in nessuna sezione dell'applicazione,
+    \item la dimensione degli elementi interattivi cliccabili è sempre superiore a \texttt{24px}, soddisfacendo il criterio \emph{2.5.8 Target Size (Minimum)} delle \emph{WCAG} (\cite{site:wcag258}). Questa verifica è stata condotta solo per l'interfaccia desktop, non essendo stata sviluppata una versione ottimizzata per dispositivi mobili,
+    \item il layout è responsive fino a una larghezza minima di \texttt{1200px}, sotto la quale non è garantita una corretta visualizzazione.
+\end{itemize}
+
+\paragraph{Limiti noti}
+L'applicazione non è fruibile in assenza di \emph{JavaScript} lato client, essendo sviluppata come \emph{Single Page Application} (\emph{\gls{spa}\glsfirstoccur}) in \emph{React}: a differenza di un'architettura con generazione lato server del markup, non esiste un contenuto statico di partenza renderizzabile senza l'esecuzione di script e una soluzione di \emph{fallback} avrebbe richiesto un'architettura basata su \emph{Server-Side Rendering}, non adottata in questo progetto.
+
+\subsubsection{Mitigazioni}
+\label{subsubsection:mitigazioni}
+Nella pagina di login (immagine \ref{fig:login}), il titolo utilizza un effetto \emph{typewriter}, che alterna i diversi template di default che è possibile utilizzare per i propri documenti, simulando una digitazione in tempo reale. Questa scelta stilistica introduce un problema di accessibilità: il criterio \emph{2.2.2 Pause, Stop, Hide} delle \emph{WCAG} (\emph{Web Content Accessibility Guidelines}) richiede che qualsiasi contenuto in movimento o che si aggiorna automaticamente per più di cinque secondi fornisca all'utente un meccanismo per metterlo in pausa, interromperlo o nasconderlo (\cite{site:wcag222}). Per risolvere questo problema, il componente \texttt{TypewriterText} è stato reso interattivo: un click, oppure la pressione dei tasti \emph{Enter}/\emph{Spazio} tramite navigazione da tastiera, mette in pausa o riprende l'animazione, riportando il titolo conforme al criterio.\\
+
+Un effetto analogo è presente nella pagina di attesa durante l'elaborazione di un documento (immagine \ref{fig:processing}): un'icona a forma di clessidra ruota continuamente per comunicare all'utente che l'analisi è ancora in corso. Le \emph{WCAG} prevedono un'eccezione al criterio \emph{2.2.2} per le animazioni di caricamento quando queste costituiscono l'unico contenuto della pagina ~\cite{site:wcag222}.
+
 
 \section{Strategia di Testing}
 Per garantire che il codice prodotto rispettasse i requisiti prefissati e non introducesse regressioni in corso d'opera, le attività di verifica e validazione sono state condotte durante tutto lo sviluppo. A ogni fase di sviluppo è stata affiancata una corrispondente fase di test, seguendo il principio per cui i difetti vanno individuati il prima possibile \emph{(fail-fast)}. La strategia di analisi dinamica è stata strutturata come segue:
@@ -210,3 +643,21 @@ Per garantire che il codice prodotto rispettasse i requisiti prefissati e non in
     \item \textbf{Test di unità}: al termine dello sviluppo di ogni singola classe, o a seguito di una sua modifica, sono stati eseguiti test di unità per verificarne il comportamento in isolamento dal resto del sistema.
     \item \textbf{Test di integrazione}: una volta superati i test di unità, sono stati implementati test che verificano la corretta interazione tra i moduli, simulando le richieste HTTP in ingresso ai controller e osservando il risultato prodotto dall'intera catena applicativa.
 \end{itemize}
+
+I risultati della copertura del codice, sono riportati nella tabella \ref{tab:coverage}.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+\rowcolor{headergreen}
+\thead{Componente} & \thead{\% Statements} & \thead{\% Branch} & \thead{\% Functions} & \thead{\% Lines} \\
+\hline
+Frontend & 89.70 & 84.07 & 86.76 & 91.36 \\
+\hline
+Backend  & 89.43 & 71.50 & 81.85 & 90.36 \\
+\hline
+\end{tabular}
+\caption{Copertura del codice}
+\label{tab:coverage}
+\end{table}

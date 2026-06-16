@@ -59,22 +59,62 @@ Il database utilizzato è \emph{MongoDB}, un database non relazionale orientato 
 Nelle fasi di progettazione si è optato per un'architettura monolitica, poiché nel contesto di un progetto di dimensioni contenute, che interagisce con un modello di intelligenza artificiale tramite API esterne creando gli agenti all'occorrenza, adottare un'architettura a microservizi avrebbe costituito un caso di over-engineering. In questo modello, l'intera applicazione viene sviluppata e distribuita come un unico artefatto eseguibile che racchiude tutti i componenti e le funzionalità necessarie. L'approccio monolitico semplifica lo sviluppo iniziale e la fase di rilascio, risultando ideale per team di dimensioni ridotte e per l'avvio rapido di nuovi applicativi, rimandando l'eventuale scomposizione in microservizi a fasi successive, qualora i domini crescano o presentino carichi differenti.
 
 \section{Architettura logica}
-La scelta dell'architettura logica è ricaduta su una \emph{Layered Architecture} (riportata nella figura \ref{fig:architetturaLogica}). Questa architettura prevede la scomposizione gerarchica in quattro strati, separati in modo netto:
+Il progetto è sviluppato a partire da un \emph{boilerplate} fornito dall'azienda ospitante, che includeva già le architetture logiche di entrambi i lati del sistema: 
 \begin{itemize}
-    \item \textbf{Presentation Layer}: gestisce l'interfaccia utente e la comunicazione con il browser. In questo progetto corrisponde al frontend sviluppato in React.
-    \item \textbf{Application Layer}: riceve le richieste HTTP in ingresso ed effettua le validazioni sintattiche, garantendo che i dati siano formalmente corretti prima di essere processati. Corrisponde ai controller di NestJS.
-    \item \textbf{Business Layer}: contiene le regole del dominio e la logica applicativa. È lo strato più complesso e deve essere isolato da quelli esterni; in questo progetto include le chiamate alle API di \emph{Anthropic} e di {\emph{\gls{docling}}\glsfirstoccur}. Corrisponde ai service di NestJS.
-    \item \textbf{Persistence Layer}: si occupa dell'interazione con il database, gestendo il salvataggio, il recupero e l'aggiornamento dei dati. Corrisponde agli schema Mongoose e a \emph{MongoDB Atlas}.
+    \item Per il \emph{backend}: una \emph{Layered Architecture}., 
+    \item perPer il \emph{frontend} una \emph{Feature-Driven Architecture}.
 \end{itemize}
 
-La dipendenza scorre in una sola direzione: il Presentation Layer comunica con l'Application Layer, che a sua volta si appoggia al Business Layer, il quale infine interagisce con il Persistence Layer. Nessuno strato conosce i dettagli implementativi di quelli non adiacenti, il che rende più semplice modificare o sostituire una parte del sistema senza impattare le altre.
+\subsection[Layered Architecture]{Backend: Layered Architecture}
+Il \emph{backend}, sviluppato con \emph{NestJS}, adotta una \emph{Layered Architecture} (figura \ref{fig:architetturaLogicaBE}) suddiviso in tre strati con dipendenze che scorrono in una sola direzione:
+\begin{itemize}
+    \item \textbf{Application Layer}: riceve le richieste \emph{HTTP} in ingresso ed effettua le validazioni sintattiche, garantendo che i dati siano formalmente corretti prima di essere processati. Corrisponde ai \emph{controller} di \emph{NestJS}.
+    \item \textbf{Business Layer}: contiene le regole del dominio e la logica applicativa. È lo strato più complesso e deve essere isolato da quelli esterni; in questo progetto include le chiamate alle \emph{API} di \emph{Anthropic} e di {\emph{\gls{docling}}\glsfirstoccur}. Corrisponde ai \emph{service} di \emph{NestJS}.
+    \item \textbf{Persistence Layer}: si occupa dell'interazione con il database, gestendo il salvataggio, il recupero e l'aggiornamento dei dati. Corrisponde agli \emph{schema} \emph{Mongoose} e a \emph{MongoDB Atlas}.
+\end{itemize}
+
+Gli strati comunicano solo con quelli adiacenti e non conoscono i dettagli interni degli altri, il che semplifica la manutenzione e la sostituzione delle singole parti.
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=1\textwidth]{architetturaLogica.png}
-    \caption{Architettura Logica}
-    \label{fig:architetturaLogica}
+    \includegraphics[width=1\textwidth]{architetturaLogicaBE.png}
+    \caption{Architettura logica Backend: Layered Architecture}
+    \label{fig:architetturaLogicaBE}
 \end{figure}
+
+\paragraph{Cos'è la Layered Architecture}
+La \emph{Layered Architecture}, nota anche come \emph{n-tier architecture}, è uno dei pattern architetturali più diffusi nello sviluppo \emph{software}. Organizza il codice in strati orizzontali distinti, ciascuno responsabile di un aspetto specifico dell'applicazione: ogni strato fornisce servizi allo strato superiore e utilizza i servizi di quello inferiore. Il principio alla base è la \emph{separation of concerns}: ogni strato si occupa esclusivamente della propria responsabilità, senza conoscere i dettagli interni degli altri. Una caratteristica fondamentale è il \emph{layer of isolation}: una modifica a uno strato (ad esempio la sostituzione del database) impatta solo lo strato adiacente, senza propagarsi al resto del sistema. Gli strati comunicano tra loro attraverso interfacce ben definite, il che rende il codice più modulare, testabile e manutenibile nel tempo \cite{site:layered}.
+
+\subsection[Feature-Driven Architecture]{Frontend: Feature-Driven Architecture}
+Il \emph{frontend}, sviluppato con \emph{React}, adotta una \emph{Feature-Driven Architecture} (figura \ref{fig:architetturaLogicaFE}), organizzata attorno a tre aree principali all'interno della cartella \texttt{src/}: 
+
+\begin{itemize} 
+    \item \textbf{features/}: contiene una cartella per ogni dominio applicativo (\texttt{analysis-doc}, \texttt{auth}, \texttt{templates}, \texttt{users}). Ogni \emph{feature} è autonoma e raggruppa al proprio interno componenti, \emph{hook}, servizi, tipi e utilità specifici per quella funzionalità, come mostrato nella figura \ref{fig:spec}. 
+    \item \textbf{shared/}: raccoglie tutto il codice riutilizzabile da più \emph{feature}, in modo da evitarne la duplicazione del codice. Comprende componenti: generici, \emph{hook} comuni, costanti, \emph{service} e tipi condivisi. 
+    \item \textbf{app/}: orchestra il \emph{routing} e i \emph{provider} globali, componendo le \emph{feature} senza conoscerne i dettagli interni. 
+\end{itemize} 
+
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=1\textwidth]{architetturaLogicaFE.png}
+    \caption{Architettura logica Frontend: Feature-Driven Architecture}
+    \label{fig:architetturaLogicaFE}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=1\textwidth]{spec.png}
+    \caption{feature d'esempio}
+    \label{fig:spec}
+\end{figure}
+
+In questa architettura è fondamentale che le dipendenze scorrano in una sola direzione: una \emph{feature} può importare da \texttt{shared/}, ma non può dipendere da un'altra \emph{feature}. Questo vincolo garantisce che ogni dominio rimanga isolato e sostituibile senza effetti a cascata sul resto dell'applicazione.
+
+\newpage
+
+\paragraph{Cos'è la Feature-Driven Architecture}
+La \emph{Feature-Driven Architecture} (FDA) è un pattern organizzativo per applicazioni \emph{frontend} in cui il codice viene raggruppato per dominio funzionale anziché per tipologia tecnica di file. Nei progetti \emph{React} tradizionali il codice viene distribuito in cartelle globali come \texttt{components/}, \texttt{pages/}, \texttt{hooks/} e \texttt{utils/} al livello di root: un approccio che funziona per applicazioni di piccole dimensioni, ma che scala male quando il progetto cresce, portando a cartelle con centinaia di componenti non correlati e rendendo la manutenzione progressivamente più difficile. Nella FDA ogni \emph{feature} è autocontenuta e raggruppa al proprio interno tutti i componenti, la logica e i tipi relativi al proprio dominio, risultando disaccoppiata dalle altre. Il codice riutilizzabile da più \emph{feature} viene isolato in una cartella \texttt{shared/} dedicata, potendolo importare ma che non dipendendo da esso \cite{site:FDA}. Il progetto sviluppato adotta questa struttura poiché il \emph{boilerplate} fornito dall'azienda la includeva già, offrendo anche l'opportunità di lavorare con un'organizzazione del codice tipica dei team di sviluppo più strutturati.
 
 \section{Infrastruttura cloud}
 L'infrastruttura è interamente ospitata su {\emph{\gls{aws}}\glsfirstoccur} ed è rappresentata nella figura \ref{fig:infrastruttura}. Il punto di ingresso per il traffico esterno è un {\emph{\gls{alb}}\glsfirstoccur} esposto su HTTPS, configurato con una regola di routing che inoltra le richieste dirette a \texttt{/api/main-app/*} al backend tramite un \emph{target group}, ovvero un raggruppamento dei container {\emph{\gls{ecs}}\glsfirstoccur} destinatari del traffico, identificati per indirizzo IP e porta. Il \gls{alb} permette inoltre di distribuire il carico su più istanze del container, aggiungendone di nuovi in caso di necessità.\\
@@ -118,6 +158,7 @@ Il backend riceve il token e ne verifica l'autenticità tramite la libreria \emp
 La gestione dei ruoli si basa sui \emph{Cognito Groups}: ogni utente appartiene di default al gruppo \emph{user}, mentre il gruppo \emph{admin} viene assegnato manualmente tramite la console di Cognito. Nel backend, \emph{NestJS} utilizza il meccanismo dei \emph{guard} per proteggere le operazioni: un guard verifica che l'utente sia autenticato prima di qualsiasi operazione, mentre un secondo guard controlla la presenza del gruppo \emph{admin} per le operazioni riservate, come la creazione e l'eliminazione degli utenti, bloccando la richiesta in caso contrario.
 
 \section{Parsing e normalizzazione documentale}
+\label{section:parsing}
 I documenti sottoposti ad analisi possono presentarsi in vari formati: PDF, DOCX e Markdown, ciascuno con caratteristiche strutturali diverse. Per poter applicare in modo uniforme sia il livello rule-based che quello basato su LLM, è necessario tradurre qualsiasi formato di input in una rappresentazione comune prima di procedere con l'analisi.\\
 
 La scelta del formato comune è ricaduta su Markdown. A differenza del testo piano, il Markdown preserva la struttura semantica del documento: titoli e la loro gerarchia, elenchi, tabelle e il loro contenuto sono tutti elementi esplicitamente rappresentati nella sintassi. Questa ricchezza strutturale è rilevante non solo per il livello rule-based, che opera sulle sezioni del documento, ma anche per il livello LLM, che può sfruttare la struttura per comprendere meglio il contesto: una policy potrebbe ad esempio richiedere che determinati dati siano presentati in forma tabellare, verifica che sarebbe impossibile su una rappresentazione testuale priva di struttura.\\
@@ -136,6 +177,7 @@ Le strategie di conversione differiscono significativamente a seconda del format
 \section[Analisi semantica]{Analisi semantica}
 
 \subsection{Sistemi di validazione rule-based}
+\label{subsection:rulebase}
 I controlli strutturali del documento vengono eseguiti tramite rule-based, il cui punto centrale è il \emph{RuleRunner}, riportato in figura \ref{fig:rule-runner}. Il suo compito è eseguire un insieme di regole su tutte le sezioni del documento e restituire per ognuna un esito che indica se la sezione ha superato tutti i controlli o meno. La firma del metodo \texttt{run} accetta le sezioni del documento e un array di regole, restituendo un risultato per ogni combinazione sezione-regola. Il risultato finale per ogni sezione è positivo solo se tutte le regole sono state superate: basta una sola violazione per segnare la sezione come non conforme.\\
 
 Ogni regola implementa l'interfaccia \emph{Rule}, che espone un unico metodo \texttt{check} con una firma comune. Questo permette a \emph{RuleRunner} di eseguire qualsiasi regola senza conoscerne l'implementazione specifica: le regole attualmente previste sono \emph{MinLengthRule} e \emph{MaxLengthRule}, che verificano rispettivamente che il contenuto di una sezione superi un numero minimo di caratteri e non ecceda un numero massimo, entrambi configurabili tramite il ruleset selezionato e caricato sul database. La scelta di definire un'interfaccia comune rende il sistema estensibile: aggiungere una nuova tipologia di controllo richiede unicamente di implementare l'interfaccia \emph{Rule} e aggiungerla all'array delle regole attive, senza modificare la logica esistente di \emph{RuleRunner}.
@@ -167,9 +209,11 @@ Ogni regola implementa l'interfaccia \emph{Rule}, che espone un unico metodo \te
 I Large Language Model sono modelli di linguaggio addestrati su enormi quantità di dati, il cui funzionamento si basa interamente su calcolo probabilistico. Durante l'addestramento il modello osserva miliardi di sequenze di testo e impara a stimare, dato un contesto, quale token è più probabile che segua. A \emph{runtime}, la risposta viene costruita in modo auto regressivo: il modello genera un token alla volta, aggiornando il contesto ad ogni passo e selezionando il token successivo in base alla probabilità calcolata. Non vi è alcuna comprensione del significato: il modello non sa di cosa si parla, ma produce sequenze statisticamente coerenti con i pattern osservati durante l'addestramento. Quello che li rende utili per compiti come il riconoscimento semantico e il rilevamento di incoerenze è che, avendo osservato una quantità sufficiente di testo, la coerenza statistica che producono approssima il risultato che si otterrebbe con una comprensione effettiva del contenuto.
 
 \subsubsection{Gestione della context window e chunking}
+\label{subsubsection:chunking}
 I modelli LLM operano su una quantità limitata di testo elaborabile in una singola chiamata, detta \emph{context window}. Inviare l'intero documento in un'unica richiesta sarebbe tecnicamente praticabile, ma produrrebbe un'analisi meno precisa: con un contesto molto esteso, l'attenzione del modello si distribuisce su una quantità maggiore di contenuto e i dettagli nelle sezioni centrali tendono ad essere trattati con minore accuratezza. Per questo motivo si è scelto di suddividere il documento per sezioni e di inviare ciascuna in una chiamata separata, una strategia nota come \emph{chunking}. Questo approccio concentra l'analisi su un pezzo di contenuto alla volta, producendo un risultato più granulare, e permette di associare direttamente ogni anomalia rilevata alla sezione che la contiene, senza dover interpretare una risposta aggregata sull'intero documento.
 
 \subsubsection{Costruzione dinamica dell'agente}
+\label{subsubsection:agente}
 Un aspetto fondamentale per l'utilizzo pratico degli LLM è la definizione del comportamento che il modello deve adottare, operazione che avviene tramite il \emph{system prompt}: un insieme di istruzioni fornite al modello prima del contenuto da analizzare, che ne definiscono il ruolo, i vincoli da rispettare e il formato atteso in output. Modificando il system prompt è possibile ottenere comportamenti radicalmente diversi dallo stesso modello di base, senza intervenire sui pesi del modello stesso. Nel sistema sviluppato gli agenti non sono statici ma vengono costruiti dinamicamente a partire dal \emph{ruleset} associato al tipo di documento: il prompt, le policy e le sezioni obbligatorie vengono composti a runtime, producendo un agente specializzato per ogni analisi.
 
 \subsubsection{Ruleset}
