@@ -227,21 +227,6 @@ In questa sezione vengono descritti gli attori che interagiscono con il sistema.
 \usecasepost{L'utente viene notificato di aver immesso delle credenziali non valide ed è invitato a riprovare}
 \end{usecase}
 
-\begin{usecase}{3.2}{Annullamento accesso alla piattaforma}
-\label{uc:3.2}
-\usecaseactors{Utente non autenticato}
-\usecasepre{L'utente si trova nella pagina di accesso alla piattaforma}
-\usecasedesc{Un utente non autenticato decide di annullare la procedura di autenticazione}
-\usecasetrig{L'utente seleziona il tasto di annullamento}
-\usecaseprin{
-    \begin{enumerate}
-        \item La procedura di autenticazione viene interrotta;
-        \item L'utente viene reindirizzato alla schermata iniziale.
-    \end{enumerate}
-}
-\usecasepost{L'utente viene reindirizzato alla \emph{home} per utenti non autenticati}
-\end{usecase}
-
 \begin{usecase}{3.3}{Recupero password}
 \label{uc:3.3}
 \usecaseactors{Utente non autenticato}
@@ -1149,8 +1134,6 @@ R-6-F-O & L'admin deve visualizzare la lista degli utenti registrati & \ucref{2.
 R-7-F-O & L'utente deve poter accedere alla piattaforma & \ucref{3} \\
 \hline
 R-8-F-O & L'utente deve venire avvisato se sbaglia le credenziali di accesso & \ucref{3.1} \\
-\hline
-R-9-F-O & L'utente deve poter annullare l'accesso alla piattaforma & \ucref{3.2} \\
 \hline
 R-10-F-O & L'utente deve poter effettuare il \emph{logout} & \ucref{4} \\
 \hline

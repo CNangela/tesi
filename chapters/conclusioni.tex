@@ -1,10 +1,64 @@
 \chapter{Conclusioni}
 \label{cap:conclusioni}
 
-\section{Consuntivo finale}
+\section{Considerazioni finali} 
+Lo svolgimento del progetto ha seguito la pianificazione del piano di lavoro. 
+\begin{itemize}
+    \item La prima settimana è stata dedicata alla formazione, con lo studio della documentazione di NestJS, Nx e degli agenti LangChain.
+    \item La fase di analisi e progettazione del sistema si è conclusa con qualche giorno di anticipo, permettendo di avviare lo sviluppo del backend leggermente prima del previsto.
+    \item Lo sviluppo del backend ha occupato circa due settimane, durante le quali sono state implementate la persistenza dei dati, l'autenticazione, il parsing dei documenti, il motore di validazione rule-based e l'integrazione con i modelli Claude di Anthropic per l'analisi semantica. Le scelte relative alla modellazione del database e all'architettura del sistema sono state più volte rivedute nel corso dello sviluppo, valutando soluzioni migliori in relazioni a problemi o aggiunta di funzionalità.
+    \item  Lo sviluppo del frontend ha impiegato ulteriori due settimane, durante le quali si è implementata l'interfaccia per il caricamento e l'analisi dei documenti, la visualizzazione dei report e le pagine per la gestione di utenti e template.
+    \item Negli ultimi giorni rimasti si è scritta la documentazione richiesta e si fatto il deploy su AWS. Il deploy è stata un'attività che ha trovato delle complicanze in quanto il container Docker del backend andava ripetutamente in crash una volta avviato in ambiente cloud impedendo che il servizio rimanesse online.
+\end{itemize}
+Sebbene il prodotto realizzato non sia destinato a un utilizzo interno all'azienda, lo stage ha permesso di sviluppare un applicativo web completo a partire da una repository aziendale già strutturata, con una configurazione e un'organizzazione del codice realizzate secondo standard professionali. Ha inoltre offerto l'opportunità di utilizzare concretamente strumenti AWS, come il processo di deploy su ECS e la gestione dell'identità tramite Cognito, altrimenti difficili da sperimentare in un contesto didattico.
 
 \section{Raggiungimento degli obiettivi}
+Come indicato nella tabella \ref{tab:requisiti_soddisfatti}, sono stati soddisfatti tutti i requisiti necessari e opzionali individuati in fase di analisi. Tra i requisiti desiderabili, due non sono stati soddisfatti: entrambi legati alla possibilità di interrompere un'analisi in corso e di segnalarne l'interruzione all'utente. Come descritto nella sezione \ref{subsection:interruzione_analisi}, questa funzionalità non è risultata praticabile per le analisi che coinvolgono Docling, poiché l'SDK non espone alcun meccanismo per annullare un task già avviato. L'unica alternativa sarebbe stata ignorare il parsing in corso, soluzione non accettabile per il consumo di risorse. Si è quindi scelto di non esporre la funzionalità, sostituendola con un limite al numero di analisi eseguibili contemporaneamente dallo stesso utente.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+\textbf{Tipo} & \textbf{Obbligatorio} & \textbf{Desiderabile} & \textbf{Opzionale} & \textbf{Totale} \\
+\hline
+Funzionale & 28/28 & 4/6 & 13/13 & 45/47 \\
+\hline
+Qualità & 5/5 & 0/0 & 0/0 & 5/5 \\
+\hline
+Vincolo & 8/8 & 0/0 & 0/0 & 8/8 \\
+\hline
+\textbf{Totale} & \textbf{41/41} & \textbf{4/6} & \textbf{13/13} & \textbf{58/60} \\
+\hline
+\end{tabular}
+\caption{Consuntivo dei requisiti soddisfatti.}
+\label{tab:requisiti_soddisfatti}
+\end{table}
 
 \section{Conoscenze acquisite}
+Lo stage ha permesso di approfondire diversi aspetti dello sviluppo di un'applicazione web completa, sia dal punto di vista delle tecnologie utilizzate sia da quello dell'organizzazione del lavoro in un contesto aziendale. \\
+
+NestJS mi ha permesso di lavorare con un'architettura organizzata attorno a moduli, controller e service, oltre a comprendere il funzionamento della dependency injection. Sul lato frontend, React era già conosciuto, ma il progetto mi ha permesso di approfondirne l'uso all'interno di un'organizzazione del codice di un contesto aziendale strutturato, secondo la Feature-Driven Architecture prevista dal boilerplate fornito da VarGroup. Un altro ambito approfondito è stato quello della gestione dell'identità tramite AWS Cognito, e più in generale la comunicazione tra frontend e backend basata su token JWT. \\
+
+Per quanto riguarda la persistenza dei dati, lo stage ha permesso di lavorare con un database non relazionale come MongoDB, comprendendo le differenze rispetto a un database relazionale, in particolare per quanto riguarda la gestione manuale dell'integrità referenziale e delle eliminazioni a cascata. Infine, un aspetto centrale del progetto è stata la comunicazione con le API di Anthropic Claude, che mi ha permesso di comprendere come lavora un agente e come crearlo.
+
+\section{Margini di miglioramento}
+Il possibile miglioramento più significativo riguarda il modulo di \emph{parsing} dei file PDF, attualmente affidato a Docling. Come descritto nella sezione \ref{subsection:interruzione_analisi}, Docling impiega mediamente tra i 2 e i 7 secondi per pagina, un tempo che diventa significativo per documenti di molte pagine. Inoltre Docling non da offre la possibilità di interrompere il parsing, dovendo rinunciare alla possibilità di interrompere un'analisi già avviata. Una direzione di miglioramento è quindi la ricerca di una libreria più rapida a parità di accuratezza nel riconoscimento della struttura, oppure lo sviluppo di un convertitore dedicato.\\
+
+Un secondo miglioramento riguarda la gestione delle immagini contenute nei documenti. Attualmente le immagini vengono escluse dall'analisi: per i file PDF la loro estrazione viene disabilitata tramite i parametri di configurazione di Docling, mentre per i file DOCX non è prevista alcuna estrazione, poiché la conversione tramite \emph{Turndown} ignora a priori i tag \texttt{<img>} presenti nell'HTML intermedio. Questa scelta deriva dalle prove effettuate durante lo sviluppo, in cui il modello non riusciva a interpretarne correttamente il contenuto semantico. Includere le immagini avrebbe introdotto solo rumore nell'analisi, senza alcun beneficio reale. Un passo avanti potrebbe essere il riconoscimento di queste immagini, sia per i PDF che per i DOCX, riuscendo ad estrarne le immagini e valutandone la coerenza rispetto al contesto del contenuto. Un'immagine potrebbe arricchire il contenuto, ad esempio illustrando un diagramma o uno schema, oppure risultare fuori contesto, dovendo segnalare all'utente il problema.\\
+
+Altri miglioramenti possibili sono: 
+\begin{itemize} 
+    \item Rendere l'applicazione utilizzabile anche da dispositivi mobili.
+    \item Modificare il caricamento dell'analisi riflettendone l'avanzamento reale, invece della sola animazione decorativa.
+    \item Estendere il livello di validazione \emph{rule-based} con nuove tipologie di regole oltre ai limiti di lunghezza sfruttando l'estensibilità dell'interfaccia \texttt{Rule} già implementata: ad esempio la verifica del formato delle date tramite espressioni regolari, o il controllo del numero delle celle sulle tabelle, controlli che oggi sono delegati all'AI ma che, essendo verifiche sintattiche, potrebbero essere risolti in modo deterministico e a un costo computazionale inferiore. 
+    \item Permettere la condivisione dei template personalizzati tra utenti all'interno della piattaforma, oltre alla sola importazione ed esportazione tramite file JSON. 
+\end{itemize}
 
 \section{Valutazione personale}
+Lo stage si è rivelato un'esperienza estremamente positiva, sia dal punto di vista tecnico che umano. Ciò che ho apprezzato maggiormente è stato avere a disposizione persone competenti a cui potermi rivolgere in qualsiasi momento per chiarimenti o dubbi su problematiche riscontrate. \\
+
+Nel primo periodo di sviluppo backend mi sono sentita in difficoltà di fronte a un \emph{boilerplate} aziendale di cui non conoscevo l'organizzazione e a tecnologie che non avevo mai utilizzato, ma con l'implementazione delle prime funzionalità ho progressivamente preso confidenza con entrambi. \\
+
+Un'altra preoccupazione era legata al \emph{deploy} sul cloud. Temevo di non riuscire a gestire la complessità dell'infrastruttura AWS; in questo caso, il supporto di persone del team interno mi ha permesso di affrontare il problema senza difficoltà, spiegandomi i vari passaggi e a cosa servissero i diversi componenti utilizzati. \\
+
+Lo stage ha inoltre confermato il mio interesse per uno sviluppo che coinvolga sia il backend che il frontend: lavorare su entrambi gli ambiti all'interno di un unico contesto applicativo mi ha permesso di comprendere meglio come le scelte fatte in un livello dell'applicazione si riflettano sull'altro. Nel complesso, questa esperienza di stage mi ha dato l'opportunità di confrontarmi con persone che hanno più esperienza di me nel settore e con le tecnologie utilizzate, conoscendone le diverse limitazioni che queste portano. Ho sempre potuto chiedere consiglio senza mai sentirmi giudicata.
