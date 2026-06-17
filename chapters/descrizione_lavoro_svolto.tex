@@ -329,13 +329,13 @@ Se l'analisi si è conclusa con successo, è possibile esportare il report, già
 \subsection{Criticità e scelte implementative}
 Lo sviluppo ha evidenziato alcune problematiche non previste in fase di progettazione, legate principalmente alla gestione delle risorse, alla consistenza dei dati e ai limiti delle librerie adottate. Per ciascuna di esse si è individuata una soluzione compatibile con i vincoli del sistema.
 
-\subsubsection{Interruzione dell'analisi e limite di concorrenza}
+\subsubsection[Interruzione analisi]{Interruzione dell'analisi e limite di concorrenza}
 \label{subsection:interruzione_analisi}
 Dato che l'analisi di un documento PDF può richiedere diversi minuti (\gls{docling} impiega mediamente tra i 2 e i 7 secondi per pagina) si è valutata la possibilità di consentire all'utente di interrompere un'analisi in corso. Questa opzione è praticabile per le chiamate ad \emph{Anthropic Claude}, che espongono un meccanismo di interruzione, ma non per \emph{Docling Serve}: l'SDK non espone alcun metodo per annullare un task avviato e l'unico modo per interrompere l'elaborazione sarebbe abbattere il container \emph{Docker}. Ignorare semplicemente il risultato non sarebbe una soluzione accettabile: il container continuerebbe a consumare memoria per portare a termine un'analisi il cui esito verrebbe scartato.\\
 
 Per questo motivo si è scelto di non esporre la funzionalità di interruzione e di limitare invece il numero di analisi eseguibili contemporaneamente a tre per utente. Questo vincolo riduce l'incentivo ad avviare analisi in modo indiscriminato e contiene il consumo di risorse in caso di utilizzo concorrente. \\
 
-per evitare che un utente con un'analisi in corso possa eliminarla manualmente, aggirandosi così il limite di tre analisi concorrenti, la cancellazione di documenti con stato \texttt{PROCESSING} o \texttt{PENDING} è stata vietata.
+per evitare che un utente con un'analisi in corso possa eliminarla manualmente, aggirando così il limite di tre analisi concorrenti, la cancellazione di documenti con stato \texttt{PROCESSING} o \texttt{PENDING} è stata vietata.
 
 \subsubsection{Comunicazione con Anthropic Claude}
 Nella fase di progettazione si era valutata la possibilità di gestire la chiamata ad \emph{Anthropic Claude} in modo asincrono, restituendo immediatamente una risposta al client e notificando il completamento in un secondo momento: con documenti di grandi dimensioni, una richiesta \emph{HTTP} sincrona avrebbe potuto richiedere tempi prolungati, con il rischio che la connessione venisse interrotta prima di ricevere la risposta. Tuttavia, dalle prove effettuate anche su documenti di dimensioni significative, l'analisi ha richiesto costantemente meno di un minuto. Si è quindi ritenuto sufficiente un semplice \texttt{await} sulla chiamata, evitando la complessità aggiuntiva di una gestione asincrona non necessaria.
@@ -346,7 +346,7 @@ Gli amministratori hanno la possibilità di eliminare un utente dalla piattaform
 \subsubsection{Eliminazione di un template}
 La gestione dei template personalizzati non era prevista nella prima fase di progettazione, trattandosi di un requisito opzionale individuato in seguito. Tuttavia, nel momento in cui si offre la possibilità di creare un'entità, è necessario garantire anche le operazioni di modifica ed eliminazione, per coerenza con il principio CRUD.\\
 
-Poiché ogni analisi è associata a un template, l'eliminazione di quest'ultimo avrebbe dovuto comportare un'alterazione dell'analisi già effettuata. Eliminare a cascata anche l'analisi non era una soluzione accettabile: una volta conclusa, i dati restano salvati nel database indipendentemente dalla disponibilità del template, ed eliminarli solo per via di un riferimento non più valido avrebbe rappresentato uno spreco. Si è quindi valutato di impostare il campo a \texttt{null} al momento dell'eliminazione del template, ma trattandosi di un database non relazionale, questa gestione avrebbe richiesto un intervento manuale. Ogni entità è gestita all'interno di un modulo separato e poiché \texttt{AnalysisReport} dipende già da \texttt{PolicyRuleset}, impostare un annullamento a cascata del campo (o l'eliminazione dell'analisi) al momento della cancellazione del template avrebbe richiesto un riferimento inverso da \texttt{PolicyRuleset} ad \texttt{AnalysisReport}, generando una dipendenza circolare tra i due moduli.\\
+Poiché ogni analisi è associata a un template, l'eliminazione di quest'ultimo avrebbe dovuto comportare un'alterazione dell'analisi già effettuata. Eliminare a cascata anche l'analisi non era una soluzione accettabile: una volta conclusa, i dati restano salvati nel database indipendentemente dalla disponibilità del template, ed eliminarli solo per via di un riferimento non più valido avrebbe rappresentato uno spreco. Successivamente si valutato di impostare il campo a \texttt{null} al momento dell'eliminazione del template. Trattandosi di un database non relazionale, entrambe le soluzioni avrebbero richiesto un intervento manuale, ma ogni entità è gestita all'interno di un modulo separato e, poiché \texttt{AnalysisReport} dipende già da \texttt{PolicyRuleset}, impostare un annullamento a cascata del campo (o l'eliminazione dell'analisi) al momento della cancellazione del template avrebbe richiesto un riferimento inverso da \texttt{PolicyRuleset} ad \texttt{AnalysisReport}, generando una dipendenza circolare tra i due moduli.\\
 
 La soluzione adottata è stata quindi una \emph{soft delete}: ai template è stato aggiunto un campo booleano \texttt{deleted}, impostato a \texttt{false} alla creazione e a \texttt{true} al momento dell'eliminazione. Questo approccio non introduce alcuna dipendenza di \texttt{PolicyRuleset} verso \texttt{AnalysisReport}, e l'accesso o il riutilizzo di template eliminati è stato vietato. Il vantaggio principale è che il \emph{frontend} può continuare a mostrare il nome del template utilizzato, permettendo di riconoscere il contesto dell'analisi, e i relativi limiti dimensionali (minimo e massimo delle sezioni), ma non può accedere alle specifiche complete del template eliminato.
 
@@ -357,6 +357,39 @@ La soluzione adottata è stata quindi una \emph{soft delete}: ai template è sta
 In caso di arresto del server, i documenti con stato \texttt{PENDING} o \texttt{PROCESSING} rimarrebbero bloccati indefinitamente, poiché l'analisi in corso non verrebbe mai completata. Per gestire questo caso, il service implementa i lifecycle hook \texttt{onApplicationBootstrap} e \texttt{onApplicationShutdown} offerti da \emph{NestJS}: il primo viene eseguito all'avvio dell'applicazione, per gestire eventuali documenti rimasti in stato inconsistente a seguito di un arresto anomalo precedente; il secondo viene eseguito alla ricezione del segnale di shutdown. In entrambi i casi, i documenti interessati vengono marcati come \texttt{ERROR} e i dati di analisi parziali già prodotti vengono eliminati, ripristinando uno stato consistente.
 
 \section{Frontend}
+Le attività di frontend comprendono l'interfaccia per il caricamento e l'analisi dei documenti, la visualizzazione dei report prodotti, la gestione dei template personalizzati e degli utenti, e l'autenticazione tramite \emph{AWS Cognito}.\\
+
+Il frontend è organizzato secondo una \emph{Feature-Driven Architecture} (sezione \ref{subsection:architetturaLogicaFE}), in cui ciascuna \emph{feature} raccoglie componenti, \emph{hook}, \emph{service} e tipi, mentre il codice condiviso è isolato in \texttt{shared/}, come mostrato nel blocco \ref{lst:struttura_repo_fe}.
+
+\begin{lstlisting}[label={lst:struttura_repo_fe}]
+AI_DocumentConsistencyPlatform/
+`-- apps/
+    |-- api-core/
+    `-- webapp/
+        |-- src/
+        |   |-- app/
+        |   |   |-- App.tsx
+        |   |   |-- ErrorBoundary.tsx
+        |   |   |-- MainLayout.tsx
+        |   |   |-- router.tsx
+        |   |   `-- routes.tsx
+        |   |-- features/
+        |   |   |-- auth
+        |   |   |-- analysis-doc
+        |   |   |-- templates
+        |   |   `-- users
+        |   |-- shared/
+        |   |   |-- components
+        |   |   |-- constants
+        |   |   |-- hooks
+        |   |   |-- services
+        |   |   |-- types
+        |   |   `-- utils
+        |   `-- style
+        `-- tests
+\end{lstlisting}
+\captionof{lstlisting}{Struttura del repository frontend}
+
 Il \emph{frontend} comunica con il \emph{backend} esclusivamente tramite richieste \emph{HTTP} verso le \emph{API REST} esposte da \emph{NestJS}. All'interno di ciascuna \emph{feature}, le chiamate verso il \emph{backend} sono isolate in file dedicati (\texttt{*.service.ts}), separando la responsabilità di costruzione delle richieste dai componenti React.\\
 
 I \emph{service} non vengono invocati direttamente dai componenti, ma tramite \emph{hook} personalizzati che racchiudono la chiamata al \emph{service} insieme alla gestione dello stato di caricamento, dell'eventuale errore e del dato recuperato. Questo livello di indirizzamento permette ai componenti di rimanere semplici, limitandosi a invocare l'\emph{hook} e a utilizzarne il risultato.\\
@@ -364,7 +397,7 @@ I \emph{service} non vengono invocati direttamente dai componenti, ma tramite \e
 Ogni \emph{hook} gestisce in autonomia il proprio stato locale (tramite \texttt{useState}), che viene poi passato ai componenti tramite \emph{props}.
 
 \subsection{Autenticazione}
-Il sistema di autenticazione era già implementato nel \emph{boilerplate} fornito dall'azienda, basato su \emph{AWS Cognito}. Il flusso prevede che, al primo accesso, l'utente riceva via email un codice temporaneo: inserendolo, viene reindirizzato a una schermata di cambio password obbligatorio (immagine \ref{fig:nuova-pw}) prima di poter accedere effettivamente alla piattaforma. È inoltre presente un flusso di recupero password (immagine \ref{fig:recupero-pw}) per gli utenti che hanno dimenticato le proprie credenziali.
+Il sistema di autenticazione era già implementato nel \emph{boilerplate} fornito dall'azienda, basato su \emph{AWS Cognito}. Il flusso prevede che, al primo accesso, l'utente riceva via email un codice temporaneo: inserendolo, viene reindirizzato a una schermata di cambio password obbligatorio (immagine \ref{fig:nuova-pw}) prima di poter accedere effettivamente alla piattaforma. È inoltre presente un flusso di recupero password per gli utenti che hanno dimenticato le proprie credenziali.
 
 \begin{figure}[h]
     \centering
@@ -373,14 +406,7 @@ Il sistema di autenticazione era già implementato nel \emph{boilerplate} fornit
     \label{fig:nuova-pw}
 \end{figure}
 
-\begin{figure}[h]
-    \centering
-    \includegraphics[width=0.8\textwidth]{frontend/recupero-pw}
-    \caption{Recupero password}
-    \label{fig:recupero-pw}
-\end{figure}
-
-La pagina di \emph{login} presenta una breve presentazione del flusso applicativo, come si può vedere nell'immagine \ref{fig:login} (caricamento del documento, scelta del template, attesa dell'analisi, consultazione ed esportazione del report), con l'obiettivo di comunicare il valore del prodotto e invogliare l'utente all'utilizzo, un approccio di \emph{design emozionale} basato sull'anticipazione. Le scelte adottate per garantirne l'accessibilità sono discusse nella sezione~\ref{subsubsection:mitigazioni}.
+La pagina di \emph{login} presenta una breve presentazione del flusso applicativo, come si può vedere nell'immagine \ref{fig:login} (caricamento del documento, scelta del template, attesa dell'analisi, consultazione ed esportazione del report), con l'obiettivo di comunicare lo scopo del prodotto e invogliare l'utente all'utilizzo, un approccio di \emph{design emozionale} basato sull'anticipazione. Le scelte adottate per garantirne l'accessibilità sono discusse nella sezione \ref{subsubsection:mitigazioni}.
 
 \begin{figure}[h]
     \centering
@@ -398,6 +424,7 @@ Il flusso di analisi è composto da tre fasi, gestite dal componente \texttt{Sta
 \end{itemize}
 
 \subsubsection{Caricamento del documento}
+\label{subsection:caricamento_documento}
 La prima fase consiste nel caricamento del file da analizzare (immagine \ref{fig:new-doc}), tramite un'area di \emph{drag} \& \emph{drop} (\texttt{FileDropzone}) che accetta anche la selezione manuale del file dal \emph{filesystem}. Sono supportati i formati \emph{PDF}, \emph{DOCX} e \emph{Markdown}, con un limite di dimensione di \texttt{20MB}; il controllo del formato viene effettuato sia sul \emph{MIME type} che sull'estensione del file, per gestire correttamente i casi in cui il browser non riconosce correttamente il tipo \emph{MIME} di un file. In caso di file non valido o troppo grande, viene mostrato un messaggio di errore puntuale, mentre la selezione di un file valido abilita il pulsante per proseguire alla fase successiva.
 
 \begin{figure}[h]
@@ -428,7 +455,7 @@ Durante l'elaborazione del documento, il componente \texttt{ProcessingAnalysis} 
     \label{fig:processing}
 \end{figure}
 
-Al completamento dell'analisi, la notifica arriva tramite il meccanismo di \emph{Server-Sent Events} descritto nella sezione~\ref{subsection:notifica}: la cronologia dei documenti viene aggiornata, la pagina corrente viene aggiornata automaticamente se l'utente si trova ancora sul documento in analisi e viene mostrata una notifica di conferma.
+Al completamento dell'analisi, la notifica arriva tramite il meccanismo di \emph{Server-Sent Events} descritto nella sezione \ref{subsection:notifica}, implementato tramite una richiesta \texttt{fetch} che legge lo \emph{stream} di risposta, invece dell'\emph{API} nativa \texttt{EventSource}, per poter autenticare la connessione tramite \emph{token} \gls{jwt}. Alla ricezione dell'evento, la cronologia dei documenti viene aggiornata, la pagina corrente viene aggiornata automaticamente se l'utente si trova ancora sul documento in analisi e viene mostrata una notifica di conferma.
 
 \newpage
 
@@ -480,7 +507,7 @@ export const FilePreview = ({ id, fileType }: FilePreviewProps) => {
 Il riquadro dell'anteprima può essere ridotto o espanso dall'utente, e il documento originale può essere scaricato in qualsiasi momento.\\
 
 A fianco dell'anteprima viene mostrato il report, strutturato in tre indicatori percentuali: sezioni mancanti, rispetto dei limiti di lunghezza e consistenza/policy; riassunti in un punteggio complessivo circolare. Di seguito vengono illustrati tre casi rappresentativi, scelti per mostrare il comportamento del sistema agli estremi e in condizioni intermedie.
-
+\newpage
 \subsubsection{Documento conforme}
 Nel caso di un documento che rispetta integralmente la struttura richiesta dal template selezionato (figura \ref{fig:perfect}), tutti e tre gli indicatori raggiungono il 100\%, e il punteggio complessivo è la media di tutti. In questo caso il report non elenca alcun problema, e per ciascun indicatore viene mostrato un messaggio di conferma (\emph{"Tutte le sezioni sono presenti"}, \emph{"Tutte le sezioni rispettano i limiti di lunghezza"}, \emph{"Il contenuto non presenta incoerenze"}).
 
@@ -497,13 +524,13 @@ Caricando un file privo di contenuto (figura \ref{fig:vuoto}), tutti gli indicat
 
 \begin{figure}[h]
     \centering
-    \begin{minipage}{0.4\textwidth}
+    \begin{minipage}{0.3\textwidth}
         \includegraphics[width=\textwidth]{frontend/vuoto}
         \captionof{figure}{File vuoto: score}
         \label{fig:vuoto}
     \end{minipage}
     \hfill
-    \begin{minipage}{0.5\textwidth}
+    \begin{minipage}{0.6\textwidth}
         \centering
         \includegraphics[width=\textwidth]{frontend/vuoto_consistency}
         \captionof{figure}{File vuoto: consistency }
@@ -529,17 +556,46 @@ Un documento che rispetta solo parzialmente la struttura e i criteri del templat
         \label{fig:report_consistency}
     \end{minipage}
 \end{figure}
+\newpage
+\subsection{Download report}
+Il report prodotto può essere esportato dall'utente in due formati: \emph{PDF} e \emph{JSON}. Il \emph{download} viene gestito tramite l'\emph{hook} \texttt{useDownloadReport}: il \emph{backend} restituisce il file richiesto come \texttt{Blob}, a partire dal quale viene generato un \emph{URL} temporaneo (tramite \texttt{URL.createObjectURL}) per attivare il download nel browser senza un reindirizzamento di pagina; l'\emph{URL} temporaneo viene poi revocato (\texttt{URL.revokeObjectURL}) una volta completato il download, per liberare la memoria allocata dal browser.
 
-\paragraph{Cerca documento}
-\subsubsection{Template}
-\paragraph{Gestione templates}
-\paragraph{Importa templates}
-\paragraph{Esplora templates}
-\subsubsection{Gestione utenti}
+\subsection{Gestione dei template}
+La gestione dei template personalizzati copre la creazione, la modifica, l'importazione, l'esportazione, la consultazione e l'eliminazione.
 
-\subsection{Componenti riutilizzabili}
-\subsection{Validazione dei form}
+\subsubsection{Creazione e modifica}
+La creazione (\texttt{AddTemplate}) e la modifica (\texttt{UpdateTemplate}) di un template condividono lo stesso componente di form (\texttt{FormTemplate}), distinto unicamente dalla presenza o assenza dei dati precompilati passati per \emph{props} facoltative.\\
 
+Il salvataggio del template è impedito finché non sono rispettati tutti i vincoli richiesti: la compilazione dei campi obbligatori (nome, contesto, descrizione, almeno una sezione richiesta) e l'assenza di errori di validazione. Le sezioni obbligatorie sono inserite tramite una lista di campi di testo (componente \texttt{List}), ciascuno modificabile o eliminabile singolarmente dopo l'inserimento. Se un campo viene modificato in modo da violare il vincolo di lunghezza minima (3 caratteri), viene segnalato con un'icona di avviso e il messaggio \emph{"Minimo 3 caratteri"} generico posto fuori dalla lista, come rappresentato nell'immagine \ref{fig:template-personalizzato}. Per garantire l'accessibilità di questa segnalazione, il medesimo messaggio di errore è presente in ciascuna (\emph{label}) riferita all'input con errore, percepibile solo dagli \emph{screen reader}.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.4\textwidth]{frontend/template-personalizzato}
+    \caption{Errore nell'inserimento sezioni obbligatorie}
+    \label{fig:template-personalizzato}
+\end{figure}
+
+\subsubsection{Importazione ed esportazione}
+Un template può essere importato da un file \emph{JSON} (\texttt{ImportTemplate}), tramite lo stesso componente di \emph{drag} \& \emph{drop} utilizzato per il caricamento dei documenti da analizzare (sezione \ref{subsection:caricamento_documento}). 
+A seguito dell'inserimento del template personalizzati come requisiti opzionale, il componente \texttt{FileDropzone} è stato modificato rendendolo generico, venendo parametrizzato tramite \emph{props} che specificano: i formati di file accettati e la dimensione massima consentita.\\
+
+\subsubsection{Gestione e consultazione}
+La pagina di gestione (\texttt{ManageTemplates}) mostra esclusivamente i template personalizzati creati dall'utente corrente, escludendo quelli eliminati tramite \emph{soft delete}. Da questa pagina è possibile modificare, eliminare ed esportare ciascun template.\\
+
+È inoltre disponibile una pagina di esplorazione (\texttt{ExploreTemplates}) che permette di consultare le specifiche di qualsiasi template, personalizzato o di default, utile per verificare quali criteri un documento dovrà rispettare prima di avviare un'analisi.
+
+\subsection{Gestione utenti}
+La gestione degli utenti è accessibile esclusivamente agli amministratori, tramite una voce di navigazione non visibile agli utenti non amministratori; un tentativo di accesso diretto alla pagina da parte di un utente senza privilegi di amministratore comporta un reindirizzamento alla pagina di caricamento nuovo documento.\\
+
+La pagina di gestione (\texttt{ManageUsers}) mostra l'elenco degli utenti registrati, filtrabile per email, escludendo dalla lista gli altri account amministratore. Le funzionalità disponibili sono limitate alla creazione e all'eliminazione degli account: non è prevista la modifica dei dati di un utente esistente da parte dell'amministratore.\\
+
+La creazione di un nuovo utente (\texttt{AddUser}) richiede esclusivamente l'inserimento di un indirizzo email, validato sia durante la digitazione (alla perdita del focus del campo) sia al momento dell'invio del form, tramite un'espressione regolare. Se l'email inserita corrisponde a un utente già esistente, il \emph{backend} invia l'errore e viene mostrato in corrispondenza del campo.
+
+\subsection{Gestione degli errori}
+Se l'analisi di un documento termina in stato di errore, l'utente ha la possibilità di farla ripartire. La nuova analisi utilizzerà il file originale e il template selezionato in precedenza. 
+Questa opzione è disponibile solo se il template utilizzato per la prima analisi esiste ancora: se nel frattempo è stato eliminato, il pulsante per l'avvio dell'analisi è disabilitato, mostrando il messaggio \emph{"template eliminato"} impedendo all'utente di procedere con il riavvio dell'analisi.
+
+\newpage
 \subsection{Accessibilità}
 L'accessibilità non era un requisito del progetto, ma durante la progettazione del \emph{frontend} si è cercato comunque di tenerne conto, richiamando a quanto studiato in precedenza. Le scelte descritte in questa sezione non seguono quindi una verifica completa secondo i quattro principi delle \emph{WCAG} (\emph{Percepibile}, \emph{Utilizzabile}, \emph{Comprensibile}, \emph{Robusto}), ma sono accorgimenti applicati nel corso dello sviluppo, anche in base ai limiti delle tecnologie, del tempo e degli strumenti usati. Trattandosi di un'applicazione pensata per essere utilizzata principalmente da \emph{desktop}, non si è tenuto conto dell'accessibilità su dispositivi mobili o per schermi sotto i \texttt{1200px}, oltre al fatto che non era comunque un requisito del progetto.
 
@@ -627,7 +683,7 @@ Oltre alle misure descritte nelle sezioni precedenti, sono stati adottati ulteri
     \item il layout è responsive fino a una larghezza minima di \texttt{1200px}, sotto la quale non è garantita una corretta visualizzazione.
 \end{itemize}
 
-\paragraph{Limiti noti}
+\paragraph{Limiti}
 L'applicazione non è fruibile in assenza di \emph{JavaScript} lato client, essendo sviluppata come \emph{Single Page Application} (\emph{\gls{spa}\glsfirstoccur}) in \emph{React}: a differenza di un'architettura con generazione lato server del markup, non esiste un contenuto statico di partenza renderizzabile senza l'esecuzione di script e una soluzione di \emph{fallback} avrebbe richiesto un'architettura basata su \emph{Server-Side Rendering}, non adottata in questo progetto.
 
 \subsubsection{Mitigazioni}
@@ -653,7 +709,7 @@ I risultati della copertura del codice, sono riportati nella tabella \ref{tab:co
 \rowcolor{headergreen}
 \thead{Componente} & \thead{\% Statements} & \thead{\% Branch} & \thead{\% Functions} & \thead{\% Lines} \\
 \hline
-Frontend & 89.70 & 84.07 & 86.76 & 91.36 \\
+Frontend & 90 & 84.09 & 86.83 & 91.84 \\
 \hline
 Backend  & 89.43 & 71.50 & 81.85 & 90.36 \\
 \hline
