@@ -70,6 +70,20 @@ canActivate(context: ExecutionContext): boolean {
 \end{lstlisting}
 \captionof{lstlisting}{Implementazione della AdminGuard}
 
+La gestione degli utenti è divisa tra:
+\begin{itemize}
+    \item \emph{UserService}: si occupa della persistenza dell'utente nel database,
+    \item \emph{CognitoUserService}: gestisce le chiamate verso \emph{Amazon Cognito}.
+\end{itemize}
+La struttura delle due classi è riportata in figura \ref{fig:user-service-uml}.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=1\textwidth]{uml/userService}
+    \caption{UML: UserService}
+    \label{fig:user-service-uml}
+\end{figure}
+
 \subsection{Base di dati}
 Il database è strutturato in sei collezioni, rappresentate nella figura \ref{fig:baseDati}. Le relazioni tra di esse rispecchiano il flusso applicativo: un utente carica un documento, su cui viene avviata un'analisi, i cui risultati vengono suddivisi per sezione.\\
 
@@ -87,7 +101,7 @@ Il database è strutturato in sei collezioni, rappresentate nella figura \ref{fi
 
 
 \begin{figure}[h]
-    \centering
+    \hspace*{-1cm}
     \includegraphics[width=1.2\textwidth]{schemas/schema}
     \caption{Basi di dati}
     \label{fig:baseDati}
@@ -98,13 +112,16 @@ Il database è strutturato in sei collezioni, rappresentate nella figura \ref{fi
 \subsection{Flusso di analisi}
 L'analisi di un documento si articola in una sequenza di fasi, dalla ricezione del file fino alla notifica del risultato al frontend. Il flusso è rappresentato in figura \ref{fig:flow}.\\
 
-L'upload avviene tramite una richiesta \texttt{POST /upload} in formato \texttt{multipart/form-data}. Una volta validato e archiviato il file, viene avviata l'analisi: il documento viene convertito in \emph{Markdown} e sottoposto in sequenza ai due moduli di analisi: prima la validazione rule-based, poi l'analisi semantica tramite \emph{Anthropic Claude}. I risultati vengono aggregati nel quality score, lo stato del documento aggiornato a \texttt{COMPLETED} e l'utente notificato tramite \emph{Server-Sent Events}.
+L'upload avviene tramite una richiesta \texttt{POST /upload} in formato \texttt{multipart/form-data}. Una volta validato e archiviato il file, viene avviata l'analisi: il documento viene convertito in \emph{Markdown} e sottoposto in sequenza ai due moduli di analisi: prima la validazione rule-based, poi l'analisi semantica tramite \emph{Anthropic Claude}. I risultati vengono aggregati nel quality score, lo stato del documento aggiornato a \texttt{COMPLETED} e l'utente notificato tramite \emph{Server-Sent Events}.\\
+
+Tutte queste fasi sono orchestrate da un unico metodo, \texttt{startAnalysis}, esposto da \emph{DocumentService}. La classe si comporta quindi come un \emph{Facade}, nascondendo in un'unica chiamata la coordinazione tra i vari moduli coinvolti (parsing, rulebase, AI, quality score, notifica), che il chiamante non deve conoscere singolarmente. La struttura della classe, riportata in figura \ref{fig:document-service-uml}, mostra le dipendenze verso i servizi coordinati.
+
 
 \begin{figure}[h]
-    \centering
-    \includegraphics[height=0.9\textwidth]{flow.png}
-    \caption{Flusso di analisi}
-    \label{fig:flow}
+    \hspace*{-2.4cm}
+    \includegraphics[height=1.2\textwidth]{uml/documentService}
+    \caption{Facade: DocumentService}
+    \label{fig:document-service-uml}
 \end{figure}
 
 \paragraph{Validazione del file}
@@ -279,9 +296,9 @@ La piattaforma prevede un sistema di template, chiamati \emph{PolicyRuleset}, ch
 
 Gli utenti possono creare, modificare ed eliminare i propri template personalizzati. I campi configurabili sono: il nome, una descrizione, il contesto, le sezioni obbligatorie, le policy da rispettare e i limiti dimensionali delle sezioni. Il campo più rilevante è \texttt{context}, che definisce il dominio applicativo del documento e orienta il comportamento dell'agente AI durante l'analisi semantica.\\
 
-In fase di creazione, i campi vengono sanitizzati per prevenire l'inserimento di HTML arbitrario e troncati a una lunghezza massima. Se esiste già un template con lo stesso nome, viene aggiunto automaticamente un suffisso numerico progressivo per evitare confusione.\\
+È inoltre possibile esportare un template in formato \emph{json} e importarne uno da file. Questa funzionalità permette di condividere configurazioni utili tra utenti, senza dover creare un template riempiendo tutti i campi del form.\\
 
-È inoltre possibile esportare un template in formato \emph{json} e importarne uno da file. Questa funzionalità permette di condividere configurazioni utili tra utenti, senza dover creare un template riempiendo tutti i campi del form.
+La gestione dei template è suddivisa in due classi, \emph{PolicyRulesetService} per le operazioni di lettura e \emph{ManagePolicyRulesetService} per quelle di scrittura. Per evitare che un utente possa modificare o eliminare un template che non gli appartiene, le rotte di update, download ed eliminazione sono protette da \emph{CheckPermissionGuard}: il guard recupera il template a partire dall'id passato nella richiesta e blocca l'operazione se l'utente non è autenticato, se il template è di default (privo di \texttt{userId}) o se il \texttt{userId} del template non corrisponde a quello dell'utente che ha fatto la richiesta.
 
 \subsection{Report di analisi}
 Al termine dell'analisi, i risultati vengono esposti tramite un endpoint dedicato che aggrega i dati prodotti dai due moduli in un \texttt{AnalysisReportDTO}, composto a sua volta dai DTO annidati \texttt{RulebaseSectionDTO} e \texttt{AiReportDTO}, riportati nel blocco \ref{lst:report_view}. Il report restituito contiene: i tre punteggi di qualità, i risultati della validazione rule-based per ciascuna sezione, il report AI con le sezioni analizzate e le eventuali anomalie rilevate, i limiti dimensionali definiti dal ruleset, lo stato dell'analisi e la data di creazione.\\
@@ -348,7 +365,9 @@ La gestione dei template personalizzati non era prevista nella prima fase di pro
 
 Poiché ogni analisi è associata a un template, l'eliminazione di quest'ultimo avrebbe dovuto comportare un'alterazione dell'analisi già effettuata. Eliminare a cascata anche l'analisi non era una soluzione accettabile: una volta conclusa, i dati restano salvati nel database indipendentemente dalla disponibilità del template, ed eliminarli solo per via di un riferimento non più valido avrebbe rappresentato uno spreco. Successivamente si valutato di impostare il campo a \texttt{null} al momento dell'eliminazione del template. Trattandosi di un database non relazionale, entrambe le soluzioni avrebbero richiesto un intervento manuale, ma ogni entità è gestita all'interno di un modulo separato e, poiché \texttt{AnalysisReport} dipende già da \texttt{PolicyRuleset}, impostare un annullamento a cascata del campo (o l'eliminazione dell'analisi) al momento della cancellazione del template avrebbe richiesto un riferimento inverso da \texttt{PolicyRuleset} ad \texttt{AnalysisReport}, generando una dipendenza circolare tra i due moduli.\\
 
-La soluzione adottata è stata quindi una \emph{soft delete}: ai template è stato aggiunto un campo booleano \texttt{deleted}, impostato a \texttt{false} alla creazione e a \texttt{true} al momento dell'eliminazione. Questo approccio non introduce alcuna dipendenza di \texttt{PolicyRuleset} verso \texttt{AnalysisReport}, e l'accesso o il riutilizzo di template eliminati è stato vietato. Il vantaggio principale è che il \emph{frontend} può continuare a mostrare il nome del template utilizzato, permettendo di riconoscere il contesto dell'analisi, e i relativi limiti dimensionali (minimo e massimo delle sezioni), ma non può accedere alle specifiche complete del template eliminato.
+La soluzione adottata è stata quindi una \emph{soft delete}: ai template è stato aggiunto un campo booleano \texttt{deleted}, impostato a \texttt{false} alla creazione e a \texttt{true} al momento dell'eliminazione. Questo approccio non introduce alcuna dipendenza di \texttt{PolicyRuleset} verso \texttt{AnalysisReport}, e l'accesso o il riutilizzo di template eliminati è stato vietato. Il vantaggio principale è che il \emph{frontend} può continuare a mostrare il nome del template utilizzato, permettendo di riconoscere il contesto dell'analisi, e i relativi limiti dimensionali (minimo e massimo delle sezioni), ma non può accedere alle specifiche complete del template eliminato. 
+
+Questa regola vale solo quando il template viene eliminato singolarmente dall'utente. Quando invece è l'utente a essere eliminato, le sue analisi vengono rimosse insieme a lui a cascata, quindi non avrebbe più senso mantenere i template a cui facevano riferimento. A questo punto, i template vengono eliminati definitivamente dal database senza la soft delete.
 
 \subsubsection{Eliminazione a cascata}
 \emph{MongoDB} è un database non relazionale e non supporta nativamente i vincoli di integrità referenziale né le eliminazioni a cascata. Una soluzione alternativa sarebbe stata l'uso dei middleware di \emph{Mongoose} (pre e post hook), che permettono di agganciare logica alle operazioni di eliminazione a livello di schema. Tuttavia, nel contesto di \emph{NestJS} con moduli separati, i hook smettono di funzionare correttamente quando lo schema deve referenziare model dichiarati in altri moduli, rendendo questa strada non praticabile per gestire eliminazioni che coinvolgono collezioni diverse. Si è quindi gestita l'eliminazione a cascata manualmente. All'eliminazione di un utente vengono rimossi tutti i suoi documenti e i suoi template; all'eliminazione di un documento vengono rimossi il file da \emph{S3}, il report di analisi associato e, a cascata, tutte le sezioni rule-based e AI collegate.
@@ -518,7 +537,6 @@ Nel caso di un documento che rispetta integralmente la struttura richiesta dal t
     \label{fig:perfect}
 \end{figure}
 
-\newpage
 \subsubsection{Documento vuoto}
 Caricando un file privo di contenuto (figura \ref{fig:vuoto}), tutti gli indicatori scendono a 0\%. Il report elenca per intero le sezioni previste dal template come mancanti, e nella sezione dedicata alla coerenza contenutistica viene segnalato un singolo errore di gravità grave, con motivazione \emph{"il documento è completamente privo di contenuto"} (figura \ref{fig:vuoto_consistency}).
 
@@ -556,7 +574,7 @@ Un documento che rispetta solo parzialmente la struttura e i criteri del templat
         \label{fig:report_consistency}
     \end{minipage}
 \end{figure}
-\newpage
+
 \subsection{Download report}
 Il report prodotto può essere esportato dall'utente in due formati: \emph{PDF} e \emph{JSON}. Il \emph{download} viene gestito tramite l'\emph{hook} \texttt{useDownloadReport}: il \emph{backend} restituisce il file richiesto come \texttt{Blob}, a partire dal quale viene generato un \emph{URL} temporaneo (tramite \texttt{URL.createObjectURL}) per attivare il download nel browser senza un reindirizzamento di pagina; l'\emph{URL} temporaneo viene poi revocato (\texttt{URL.revokeObjectURL}) una volta completato il download, per liberare la memoria allocata dal browser.
 
@@ -595,7 +613,6 @@ La creazione di un nuovo utente (\texttt{AddUser}) richiede esclusivamente l'ins
 Se l'analisi di un documento termina in stato di errore, l'utente ha la possibilità di farla ripartire. La nuova analisi utilizzerà il file originale e il template selezionato in precedenza. 
 Questa opzione è disponibile solo se il template utilizzato per la prima analisi esiste ancora: se nel frattempo è stato eliminato, il pulsante per l'avvio dell'analisi è disabilitato, mostrando il messaggio \emph{"template eliminato"} impedendo all'utente di procedere con il riavvio dell'analisi.
 
-\newpage
 \subsection{Accessibilità}
 L'accessibilità non era un requisito del progetto, ma durante la progettazione del \emph{frontend} si è cercato comunque di tenerne conto, richiamando a quanto studiato in precedenza. Le scelte descritte in questa sezione non seguono quindi una verifica completa secondo i quattro principi delle \emph{WCAG} (\emph{Percepibile}, \emph{Utilizzabile}, \emph{Comprensibile}, \emph{Robusto}), ma sono accorgimenti applicati nel corso dello sviluppo, anche in base ai limiti delle tecnologie, del tempo e degli strumenti usati. Trattandosi di un'applicazione pensata per essere utilizzata principalmente da \emph{desktop}, non si è tenuto conto dell'accessibilità su dispositivi mobili o per schermi sotto i \texttt{1200px}, oltre al fatto che non era comunque un requisito del progetto.
 
@@ -709,9 +726,9 @@ I risultati della copertura del codice, sono riportati nella tabella \ref{tab:co
 \rowcolor{headergreen}
 \thead{Componente} & \thead{\% Statements} & \thead{\% Branch} & \thead{\% Functions} & \thead{\% Lines} \\
 \hline
-Frontend & 90 & 84.09 & 86.83 & 91.84 \\
+Frontend & 90 & 83.21 & 87.21 & 92.34 \\
 \hline
-Backend  & 89.43 & 71.50 & 81.85 & 90.36 \\
+Backend  & 89.47 & 72.10 & 81.34 & 90.40 \\
 \hline
 \end{tabular}
 \caption{Copertura del codice}
