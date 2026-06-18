@@ -151,11 +151,11 @@ La soluzione è stata \gls{docling}, una libreria open source sviluppata da \emp
 \paragraph{Integrazione con Docling:}
 Poiché il core di \gls{docling} è scritto in \emph{Python}, l'integrazione con il backend \emph{NestJS} richiede un livello intermedio. \emph{Docling Serve} è un server REST che espone via HTTP le funzionalità di \gls{docling} ed è eseguito in un container \emph{Docker} separato sulla porta \texttt{5001}. Il backend comunica con esso tramite \texttt{docling-sdk}, che si occupa di costruire le richieste HTTP, gestire i task asincroni e recuperare il risultato.\\
 
-\emph{Docling Serve} espone due meccanismi per monitorare lo stato di un task asincrono: il polling HTTP e una connessione \emph{WebSocket}, attraverso cui il server notifica il client al completamento dell'elaborazione. Si è scelto di adottare la modalità ibrida offerta dall'SDK (\texttt{method: 'hybrid'}), che tenta prima la connessione \emph{WebSocket} e ricade automaticamente sul polling HTTP in caso di fallimento, garantendo sia l'efficienza della connessione persistente sia la robustezza del fallback.\\
+\emph{Docling Serve} offre due meccanismi per monitorare lo stato di un task asincrono: il polling HTTP e una connessione \emph{WebSocket}. Si è scelto il polling HTTP tramite \texttt{task.poll()}, metodo pubblico di \texttt{AsyncConversionTask}, poiché il metodo alternativo \texttt{task.waitForCompletion()}, che è in grado di gestire anche il fallback \emph{WebSocket}, nell'attuale versione \texttt{2.0.6} ha un timeout fisso di 15 minuti non configurabile, limite che per documenti di grandi dimensioni si è arrivato a superare.\\
 
-La conversione avviene in tre fasi, il cui codice è riportato nel blocco \ref{lst:pdf_parser}. 
+La conversione avviene in tre fasi.
 
-\subparagraph{1) \texttt{convertFileAsync}} invia il file tramite una richiesta \texttt{POST} multipart e restituisce immediatamente un oggetto \texttt{AsyncConversionTask} senza attendere il completamento dell'elaborazione. I principali parametri configurati sono:
+\subparagraph{1) \texttt{convertFileAsync}} invia il file tramite una richiesta \texttt{ POST} multipart e restituisce immediatamente un oggetto \texttt{AsyncConversionTask} senza attendere il completamento dell'elaborazione. I principali parametri configurati sono:
 \begin{itemize}
     \item output esclusivo in \emph{Markdown};
     \item disabilitazione dell'\emph{\gls{ocr}\glsfirstoccur} poiché i PDF elaborati contengono testo selezionabile;
@@ -164,43 +164,9 @@ La conversione avviene in tre fasi, il cui codice è riportato nel blocco \ref{l
 
 La disabilitazione delle immagini non è motivata solo dal risparmio di tempo ed elaborazione, ma deriva anche da un'osservazione nata durante l'implementazione: nei primi tentativi di estrazione, il modello non riusciva a comprendere correttamente il contenuto semantico delle immagini estratte, arrivando ad esempio a identificare uno \emph{use case diagram} come una semplice composizione di cerchi, senza cogliere cosa rappresentasse. Inoltre, poiché per i file \emph{DOCX} la comprensione delle immagini era già disabilitata a priori e il formato non prevede alcun meccanismo che ne descriva il contenuto, si è scelto di disabilitarla anche per i \emph{PDF} per mantenere coerenza tra i due flussi di elaborazione.
 
-\subparagraph{2) \texttt{task.waitForCompletion()}} blocca l'esecuzione fino al completamento del task tramite il meccanismo ibrido configurato. 
+\subparagraph{2) Polling tramite \texttt{task.poll()}} Si attende il completamente tramite un un ciclo che richiama ripetutamente \texttt{task.poll()} ogni tre secondi, il quale esegue una singola richiesta \texttt{GET} verso \texttt{/v1/status/poll/\{taskId\}} e restituisce un \texttt{TaskStatusResponse} con campo \texttt{task\_status} di tipo \texttt{"pending" | "started" | "success" | "failure"}. Il ciclo termina appena riceve uno stato di chiusura o al superamento del timeout configurabile, impostato a 60 minuti.
+
 \subparagraph{3) \texttt{task.getResult()}} recupera il documento convertito: il contenuto \emph{Markdown} è disponibile nel campo \texttt{document.md\_content} e viene post-processato per decodificare le entità HTML che \emph{Docling Serve} può introdurre durante la serializzazione.
-
-\begin{lstlisting}[label={lst:pdf_parser}]
-constructor() {
-  this.client = new Docling({
-    api: {
-      baseUrl: process.env.DOCLING_URL ?? 'http://localhost:5001',
-    },
-    progress: {
-      method: 'hybrid',
-      websocketTimeout: 5000,
-    },
-  });
-}
-
-async parseToMarkdown(file: Express.Multer.File): Promise<string> {
-  const task = await this.client.convertFileAsync({
-    files: Buffer.from(file.buffer),
-    filename: file.originalname,
-    to_formats: ['md'],
-    do_ocr: false,
-    image_export_mode: 'placeholder',
-    include_images: false,
-    do_picture_description: false,
-  });
-
-  await task.waitForCompletion();
-  const result = await task.getResult();
-
-  return (result.document?.md_content ?? '')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&amp;/g, '&');
-}
-\end{lstlisting}
-\captionof{lstlisting}{Implementazione del PdfParserAdapter}
 
 \subsubsection{Analisi documentale}
 \paragraph{Validazione rule-based}
@@ -728,7 +694,7 @@ I risultati della copertura del codice, sono riportati nella tabella \ref{tab:co
 \hline
 Frontend & 90 & 83.21 & 87.21 & 92.34 \\
 \hline
-Backend  & 89.47 & 72.10 & 81.34 & 90.40 \\
+Backend  & 89.50 & 72.20 & 81.49 & 90.41 \\
 \hline
 \end{tabular}
 \caption{Copertura del codice}
