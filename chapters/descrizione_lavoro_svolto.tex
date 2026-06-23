@@ -114,8 +114,7 @@ L'analisi di un documento si articola in una sequenza di fasi, dalla ricezione d
 
 L'upload avviene tramite una richiesta \texttt{POST /upload} in formato \texttt{multipart/form-data}. Una volta validato e archiviato il file, viene avviata l'analisi: il documento viene convertito in \emph{Markdown} e sottoposto in sequenza ai due moduli di analisi: prima la validazione rule-based, poi l'analisi semantica tramite \emph{Anthropic Claude}. I risultati vengono aggregati nel quality score, lo stato del documento aggiornato a \texttt{COMPLETED} e l'utente notificato tramite \emph{Server-Sent Events}.\\
 
-Tutte queste fasi sono orchestrate da un unico metodo, \texttt{startAnalysis}, esposto da \emph{DocumentService}. La classe si comporta quindi come un \emph{Facade}, nascondendo in un'unica chiamata la coordinazione tra i vari moduli coinvolti (parsing, rulebase, AI, quality score, notifica), che il chiamante non deve conoscere singolarmente. La struttura della classe, riportata in figura \ref{fig:document-service-uml}, mostra le dipendenze verso i servizi coordinati.
-
+Tutte queste fasi sono orchestrate da un unico metodo, \texttt{startAnalysis}, esposto da \emph{DocumentService}. La classe si comporta come un \emph{Facade}, nascondendo in un'unica chiamata la gestione dei vari moduli coinvolti (parsing, rulebase, AI, quality score, notifica), che il chiamante non deve conoscere singolarmente. Lo stesso pattern è presente anche nella fase di eliminazione: i metodi \texttt{deleteByUserId} e \texttt{deleteByDocumentId} gestiscono più servizi (documenti, sezioni rulebase, sezioni AI), esponendo al client un'unica operazione e nascondendo la sequenza di cancellazioni a cascata necessaria per mantenere coerente lo stato del database. La struttura della classe, riportata in figura \ref{fig:document-service-uml}, mostra le dipendenze verso i servizi interessati.
 
 \begin{figure}[h]
     \hspace*{-2.4cm}
@@ -676,7 +675,7 @@ Nella pagina di login (immagine \ref{fig:login}), il titolo utilizza un effetto 
 Un effetto analogo è presente nella pagina di attesa durante l'elaborazione di un documento (immagine \ref{fig:processing}): un'icona a forma di clessidra ruota continuamente per comunicare all'utente che l'analisi è ancora in corso. Le \emph{WCAG} prevedono un'eccezione al criterio \emph{2.2.2} per le animazioni di caricamento quando queste costituiscono l'unico contenuto della pagina ~\cite{site:wcag222}.
 
 
-\section{Strategia di Testing}
+\section{Testing}
 Per garantire che il codice prodotto rispettasse i requisiti prefissati e non introducesse regressioni in corso d'opera, le attività di verifica e validazione sono state condotte durante tutto lo sviluppo. A ogni fase di sviluppo è stata affiancata una corrispondente fase di test, seguendo il principio per cui i difetti vanno individuati il prima possibile \emph{(fail-fast)}. La strategia di analisi dinamica è stata strutturata come segue:
 \begin{itemize}
     \item \textbf{Test di unità}: al termine dello sviluppo di ogni singola classe, o a seguito di una sua modifica, sono stati eseguiti test di unità per verificarne il comportamento in isolamento dal resto del sistema.
